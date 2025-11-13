@@ -1,4 +1,4 @@
-"RowIDs","Age_Group","License_Holders","JURISDICTION","GENDER","YEAR","Total"
+"RowIDs","Age_Group","License_Holders","State","GENDER","YEAR","Total"
 "Row0","16-19",136254,"NSW","Female",2010,2315322
 "Row0","20-24",186532,"NSW","Female",2010,2315322
 "Row0","25-29",208155,"NSW","Female",2010,2315322
