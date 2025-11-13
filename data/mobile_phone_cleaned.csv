@@ -1,4 +1,20 @@
-"YEAR","JURISDICTION","DETECTION_METHOD","TOTAL_FINES","LICENCE_TOTAL","FINES_PER_10K"
+"YEAR","JURISDICTION","DETECTION_METHOD","TOTAL_FINES","LICENCE_TOTAL","FINES_PER_10K_LICENCES"
+2008,"ACT","Police issued",2060,,
+2008,"NSW","Police issued",40882,,
+2008,"NT","Police issued",671,,
+2008,"QLD","Police issued",28499,,
+2008,"SA","Police issued",11411,,
+2008,"TAS","Police issued",6780,,
+2008,"VIC","Police issued",49739,,
+2008,"WA","Police issued",15957,,
+2009,"ACT","Police issued",1890,,
+2009,"NSW","Police issued",41167,,
+2009,"NT","Police issued",1106,,
+2009,"QLD","Police issued",33352,,
+2009,"SA","Police issued",14167,,
+2009,"TAS","Police issued",5665,,
+2009,"VIC","Police issued",53101,,
+2009,"WA","Police issued",14804,,
 2010,"ACT","Police issued",2407,574268,41.914228200073836
 2010,"NSW","Police issued",51104,9582980,53.32787921919903
 2010,"NT","Police issued",998,265122,37.64304735178522
