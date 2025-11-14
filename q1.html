@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Q1 – National Trends Over Time</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" type="image/png" href="image/drive.png">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+
+<body>
+
+  <!-- NAVBAR -->
+  <div class="navbar">
+    <div class="menu-icon">
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+    </div>
+  </div>
+
+  <!-- SIDEMENU -->
+  <nav class="side-menu">
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="about.html">About</a></li>
+
+      <li class="dropdown">
+        <a href="#" id="dashToggle">Dashboard</a>
+        <ul class="submenu">
+          <li><a href="q1.html">How Offences Have Changed Over the Years</a></li>
+          <li><a href="q2.html">Police vs Camera: How Fines Are Detected</a></li>
+          <li><a href="q3.html">Which States Have Higher Offence Rates?</a></li>
+          <li><a href="q4.html">Camera Enforcement Impact</a></li>
+          <li><a href="q5.html">Compliance Improvements</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="overlay"></div>
+
+  <!-- CONTENT -->
+  <div class="page-container">
+    <h1 class="page-title">How Offences Have Changed Over the Years</h1>
+    <p class="section-desc">
+      Trends in total mobile-phone-related fines across jurisdictions (2008–2024).
+    </p>
+
+    <div id="tooltip" class="tooltip"></div>
+
+    <section class="chart-section">
+      <h2 class="chart-header">Multi-series Line Chart</h2>
+      <div id="q1-multiline" class="chart-box"></div>
+    </section>
+
+    <section class="chart-section">
+      <h2 class="chart-header">Small Multiples — Per Jurisdiction</h2>
+      <div id="q1-small" class="chart-box grid-box"></div>
+    </section>
+  </div>
+
+  <!-- SCRIPTS -->
+  <script src="js/script.js"></script>
+  <script src="js/q1_multiline.js"></script>
+  <script src="js/q1_small.js"></script>
+
+</body>
+</html>
