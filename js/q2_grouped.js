@@ -11,7 +11,7 @@ const q2gSvg = d3.select("#q2-grouped")
 
 const q2gTooltip = d3.select("#tooltip");
 
-d3.csv("data/)mobile_phone_cleaned.csv").then(data => {
+d3.csv("data/mobile_phone_cleaned.csv").then(data => {
   data.forEach(d => {
     d.YEAR = +d.YEAR;
     d.TOTAL_FINES = +d.TOTAL_FINES;
