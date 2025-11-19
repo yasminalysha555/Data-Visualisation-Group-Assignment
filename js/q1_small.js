@@ -1,94 +1,151 @@
 const q1SmallTooltip = d3.select("#tooltip");
+d3.csv("data/mobile_phone_cleaned.csv").then(rawData => {
 
-d3.csv("data/mobile_phone_cleaned.csv").then(data => {
-  data.forEach(d => {
-    d.YEAR = +d.YEAR;
-    d.TOTAL_FINES = +d.TOTAL_FINES;
-  });
+  const data = rawData.map(d => ({
+    YEAR: +d.YEAR,
+    JURISDICTION: d.JURISDICTION,
+    DETECTION_METHOD: d.DETECTION_METHOD,
+    TOTAL_FINES: +d.TOTAL_FINES
+  }));
 
   const states = [...new Set(data.map(d => d.JURISDICTION))];
 
-  const width = 240, height = 160;
-  const margin = { top: 24, right: 10, bottom: 20, left: 32 };
+  const width = 230,
+        height = 160;
 
-  const x = d3.scaleLinear()
-    .domain(d3.extent(data, d => d.YEAR))
-    .range([margin.left, width - margin.right]);
-
-  const y = d3.scaleLinear()
-    .domain([0, d3.max(data, d => d.TOTAL_FINES)]).nice()
-    .range([height - margin.bottom, margin.top]);
-
-  const line = d3.line()
-    .curve(d3.curveMonotoneX)
-    .x(d => x(d.YEAR))
-    .y(d => y(d.TOTAL_FINES));
+  const margin = { top: 25, right: 10, bottom: 22, left: 45 };
 
   const container = d3.select("#q1-small");
 
+  const color = d3.scaleOrdinal()
+    .domain(states)
+    .range([
+      "#77AADD","#99DDFF","#DDAACC","#CCEEFF",
+      "#FFAABB","#88CCEE","#EE8866","#DDCC77"
+    ]);
+
   states.forEach(state => {
-    const subset = data.filter(d => d.JURISDICTION === state);
+
+    let stateData = data.filter(d => d.JURISDICTION === state);
+
+    stateData = stateData.sort((a, b) => a.YEAR - b.YEAR);
+
+    const maxVal = d3.max(stateData, d => d.TOTAL_FINES) || 1;
+
+    const x = d3.scaleLinear()
+      .domain(d3.extent(stateData, d => d.YEAR))
+      .range([margin.left, width - margin.right]);
+
+    const y = d3.scaleLinear()
+      .domain([0, maxVal])
+      .nice()
+      .range([height - margin.bottom, margin.top]);
+
+    // Flexible tick count based on data scale (fixes ACT)
+    let yTicks = 4;
+    if (maxVal < 5000) yTicks = 3;
+    if (maxVal > 20000) yTicks = 5;
 
     const svg = container.append("svg")
       .attr("width", width)
       .attr("height", height)
-      .attr("data-state", state)   // store state name for styling
+      .attr("data-state", state)
       .on("click", function () {
-        const panel = d3.select(this);
-        const allPanels = d3.selectAll("#q1-small svg");
-        const isSelected = panel.classed("selected");
+        const all = d3.selectAll("#q1-small svg");
+        const selected = d3.select(this).classed("selected");
 
-        if (isSelected) {
-          // unselect → reset all
-          allPanels.classed("inactive", false).classed("selected", false);
+        if (selected) {
+          all.classed("inactive", false).classed("selected", false);
         } else {
-          // select this one, fade others
-          allPanels.classed("inactive", true).classed("selected", false);
-          panel.classed("inactive", false).classed("selected", true);
+          all.classed("inactive", true).classed("selected", false);
+          d3.select(this).classed("inactive", false).classed("selected", true);
         }
       });
 
+    // X AXIS
     svg.append("g")
       .attr("class", "axis")
-      .attr("transform", `translate(0,${height - margin.bottom})`)
-      .call(d3.axisBottom(x).ticks(4).tickFormat(d3.format("d")));
+      .attr("transform", `translate(0, ${height - margin.bottom})`)
+      .call(
+        d3.axisBottom(x)
+          .ticks(4)
+          .tickFormat(d3.format("d"))
+      )
+      .selectAll("text")
+      .style("font-size", "10px");
 
+    // Y AXIS (FIXED)
     svg.append("g")
       .attr("class", "axis")
-      .attr("transform", `translate(${margin.left},0)`)
-      .call(d3.axisLeft(y).ticks(3));
+      .attr("transform", `translate(${margin.left}, 0)`)
+      .call(
+        d3.axisLeft(y)
+          .ticks(yTicks)
+          .tickFormat(d => d.toLocaleString())
+      )
+      .selectAll("text")
+      .style("font-size", "10px");
 
-    svg.append("path")
-      .datum(subset)
+    // LINE GENERATOR
+    const line = d3.line()
+      .curve(d3.curveMonotoneX)
+      .x(d => x(d.YEAR))
+      .y(d => y(d.TOTAL_FINES));
+
+    // ANIMATED PATH
+    const path = svg.append("path")
+      .datum(stateData)
       .attr("fill", "none")
-      .attr("stroke", "#007acc")
+      .attr("stroke", color(state))
       .attr("stroke-width", 2)
       .attr("d", line);
 
+    const totalLength = path.node().getTotalLength();
+
+    path
+      .attr("stroke-dasharray", totalLength + " " + totalLength)
+      .attr("stroke-dashoffset", totalLength)
+      .transition()
+      .duration(700)
+      .ease(d3.easeCubic)
+      .attr("stroke-dashoffset", 0);
+
+    // DOTS
     svg.selectAll(".dot")
-      .data(subset)
+      .data(stateData)
       .enter()
       .append("circle")
       .attr("class", "dot")
       .attr("cx", d => x(d.YEAR))
       .attr("cy", d => y(d.TOTAL_FINES))
       .attr("r", 3)
-      .attr("fill", "#007acc")
+      .attr("fill", color(state))
       .on("mouseover", (event, d) => {
-        q1SmallTooltip.style("opacity", 1)
-          .html(
-            `<strong>${state}</strong><br/>Year: ${d.YEAR}<br/>Fines: ${d.TOTAL_FINES.toLocaleString()}`
-          )
-          .style("left", (event.pageX + 10) + "px")
-          .style("top", (event.pageY - 20) + "px");
+        const prev = stateData.find(p => p.YEAR === d.YEAR - 1);
+        const pct = prev
+          ? (((d.TOTAL_FINES - prev.TOTAL_FINES) / prev.TOTAL_FINES) * 100).toFixed(1)
+          : "—";
+
+        q1SmallTooltip
+          .style("opacity", 1)
+          .html(`
+            <strong>${state}</strong><br/>
+            Year: ${d.YEAR}<br/>
+            Fines: ${d.TOTAL_FINES.toLocaleString()}<br/>
+            Change: ${pct === "—" ? "—" : (pct > 0 ? "+" : "") + pct + "%"}
+          `)
+          .style("left", (event.pageX + 12) + "px")
+          .style("top", (event.pageY - 28) + "px");
       })
       .on("mouseout", () => q1SmallTooltip.style("opacity", 0));
 
+    // STATE TITLE LABEL
     svg.append("text")
       .attr("x", margin.left)
-      .attr("y", margin.top - 8)
+      .attr("y", margin.top - 10)
       .attr("fill", "#003366")
       .attr("font-size", 12)
+      .attr("font-weight", "600")
       .text(state);
   });
 });

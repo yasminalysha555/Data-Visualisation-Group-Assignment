@@ -3,9 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Q1 – National Trends Over Time</title>
+  <title>Q1 – Offence Trends Over Time</title>
+
   <link rel="stylesheet" href="css/style.css" />
   <link rel="icon" type="image/png" href="image/drive.png">
+
+  <!-- D3 -->
   <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 
@@ -20,7 +23,7 @@
     </div>
   </div>
 
-  <!-- SIDEMENU -->
+  <!-- SIDE MENU -->
   <nav class="side-menu">
     <ul>
       <li><a href="index.html">Home</a></li>
@@ -41,30 +44,70 @@
 
   <div class="overlay"></div>
 
-  <!-- CONTENT -->
+  <!-- MAIN CONTENT -->
   <div class="page-container">
-    <h1 class="page-title">How Offences Have Changed Over the Years</h1>
+
+    <h1 class="page-title">How Mobile Phone Offences Changed Over Time</h1>
     <p class="section-desc">
-      Trends in total mobile-phone-related fines across jurisdictions (2008–2024).
+      Explore long-term trends in mobile phone-related infringements from 2008–2024, across all Australian states.
     </p>
 
+    <!-- Tooltip -->
     <div id="tooltip" class="tooltip"></div>
 
-    <section class="chart-section">
-      <h2 class="chart-header">Multi-series Line Chart</h2>
-      <div id="q1-multiline" class="chart-box"></div>
-    </section>
+    <!-- ======================================================= -->
+    <!--                    MULTILINE CHART                      -->
+    <!-- ======================================================= -->
 
-    <section class="chart-section">
-      <h2 class="chart-header">Small Multiples — Per Jurisdiction</h2>
-      <div id="q1-small" class="chart-box grid-box"></div>
-    </section>
+    <h2 class="chart-header">Multi-series Line Chart</h2>
+
+    <!-- ⭐ FILTER CONTROLS ⭐ -->
+    <div class="chart-controls q1-controls">
+
+      <!-- Metric selector -->
+      <label>
+        <input type="radio" name="metricQ1" value="TOTAL_FINES" checked>
+        Total fines
+      </label>
+
+      <label>
+        <input type="radio" name="metricQ1" value="FINES_PER_10K_LICENCES">
+        Fines per 10k licences
+      </label>
+
+      <!-- Jurisdiction view selector -->
+      <select id="q1-view">
+        <option value="all">All jurisdictions</option>
+        <option value="top3">Top 3 jurisdictions</option>
+        <option value="bottom3">Bottom 3 jurisdictions</option>
+        <option value="single">Single jurisdiction</option>
+      </select>
+
+      <!-- Shows only when “single jurisdiction” is selected -->
+      <select id="q1-state-select" style="display:none;"></select>
+
+    </div>
+
+    <!-- MULTILINE CHART -->
+    <div id="q1-multiline" class="chart-box"></div>
+
+    <!-- ======================================================= -->
+    <!--                    SMALL MULTIPLES                      -->
+    <!-- ======================================================= -->
+
+    <h2 class="chart-header">Small Multiples by State</h2>
+    <p class="section-desc">
+      Hover to compare trends across states. Click a panel to spotlight it.
+    </p>
+
+    <div id="q1-small" class="small-multiples-grid"></div>
+
   </div>
 
-  <!-- SCRIPTS -->
-  <script src="js/script.js"></script>
-  <script src="js/q1_multiline.js"></script>
-  <script src="js/q1_small.js"></script>
+  <!-- JS Files -->
+  <script src="js/script.js"></script>         <!-- Menu + dropdown -->
+  <script src="js/q1_multiline.js"></script>   <!-- Multiline chart -->
+  <script src="js/q1_small.js"></script>       <!-- Small multiples -->
 
 </body>
 </html>
