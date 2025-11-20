@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — Mobile Phone Enforcement</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" type="image/png" href="image/drive.png">
+</head>
+<body>
+  <div class="navbar">
+    <div class="menu-icon">
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+    </div>
+  </div>
+
+  <nav class="side-menu">
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="dashboard.html" class="active">Dashboard</a></li>
+      <li><a href="about.html">About</a></li>
+    </ul>
+  </nav>
+
+  <div class="overlay"></div>
+
+  <div class="container">
+    <header>
+      <h1>Graph</h1>
+      <p class="authors">By <span class="highlight">Yasmin Alysha</span> &amp; <span class="highlight">Khairul Annas</span></p>
+    </header>
+
+    <section class="chart-section">
+      <h2>Mobile Phone Offences by Jurisdiction (2008–2024)</h2>
+      <div id="chart-container">
+        <svg id="multiLineChart"></svg>
+      </div>
+    </section>
+
+    <footer>
+      <p>
+        COS30045 Data Visualisation Project — Swinburne University of Technology<br>
+        By Yasmin Alysha and Khairul Annas
+      </p>
+    </footer>
+  </div>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="js/script.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>

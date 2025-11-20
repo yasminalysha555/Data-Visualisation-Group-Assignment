@@ -14,3 +14,4 @@ overlay.addEventListener('click', toggleMenu);
 document.getElementById("startBtn").addEventListener("click", () => {
   window.location.href = "dashboard.html";
 });
+// chart code moved to js/dashboard.js
