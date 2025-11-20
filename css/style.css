@@ -388,6 +388,37 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width:20px; 
   color: #00263a;
 }
 
+/* Q5-specific SVG styling */
+.svg-q5 svg {
+  width: 100%;
+  height: 510px;
+}
+.svg-q5 .x-axis path,
+.svg-q5 .x-axis line,
+.svg-q5 .y-axis path,
+.svg-q5 .y-axis line {
+  stroke: rgba(0,0,0,0.06);
+}
+
+/* Q5 tooltip style */
+.chart-tooltip.q5-tooltip {
+  background: linear-gradient(180deg,#fffdf6,#fff1e0);
+  border: 1px solid rgba(200,140,0,0.12);
+  color: #2a2a1f;
+}
+
+/* Horizontal legend for Q5 */
+#q5-legend { margin-top: 12px; }
+#q5-legend .legend-list { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+#q5-legend .legend-entry { display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:8px; background: rgba(255,255,255,0.9); box-shadow: 0 6px 12px rgba(0,0,0,0.04); }
+#q5-legend .legend-entry input[type="checkbox"] { width:16px; height:16px; margin:0; transform:scale(1.02); }
+#q5-legend .legend-entry span { display:inline-block; vertical-align:middle; }
+#q5-legend .legend-entry .color-box { width:12px; height:12px; border-radius:2px; }
+
+@media (max-width:520px) {
+  #q5-legend .legend-entry { padding:6px 6px; gap:6px; }
+}
+
 /* Camera editor (Q4) horizontal layout */
 #camera-editor { margin: 10px 0 18px 0; }
 .camera-grid { display:flex; flex-direction:column; gap:6px; overflow-x:auto; padding:6px 4px; }

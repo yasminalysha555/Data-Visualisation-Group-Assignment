@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Q4 — Camera detection: Before vs After</title>
+  <title>Q5 — Compliance improvement (Before/After)</title>
   <link rel="stylesheet" href="css/style.css">
-  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
-<body class="svg-q4">
+<body class="svg-q5">
   <!-- NAVBAR -->
   <div class="navbar">
     <div class="menu-icon">
@@ -22,7 +22,6 @@
     <ul>
       <li><a href="index.html">Home</a></li>
       <li><a href="about.html">About</a></li>
-
       <li class="dropdown">
         <a href="#" id="dashToggle">Dashboard</a>
         <ul class="submenu">
@@ -39,27 +38,18 @@
   <div class="overlay"></div>
 
   <main class="page-container">
-    <h1>Camera Enforcement Impact: Before vs After</h1>
+    <h1>Compliance Improvements</h1>
+    <p class="section-desc">Multi-line chart (years vs total offences)</p>
 
-    <section id="controls">
-      <div class="q4-toolbar">
-        <div class="q4-toolbar-left">
-          <p class="muted">Each jurisdiction has a camera introduction year — <strong>dashed = Before</strong>, <strong>solid = After</strong>.</p>
-          <div id="camera-editor"></div>
-        </div>
-        <div class="q4-toolbar-right">
-          <button id="update-camera" class="primary">Update chart</button>
-        </div>
+    <section class="chart-section">
+      <div id="q5-chart">
+        <svg id="q5-svg" width="960" height="520"></svg>
       </div>
-    </section>
-
-    <section id="chart">
-      <svg id="q4-svg" width="960" height="520"></svg>
-      <div id="q4-legend"></div>
+      <div id="q5-legend"></div>
     </section>
   </main>
 
   <script src="js/script.js"></script>
-  <script src="js/q4.js"></script>
+  <script src="js/q5.js"></script>
 </body>
 </html>
