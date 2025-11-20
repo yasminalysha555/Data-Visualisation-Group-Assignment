@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Q3 — Offence Rates by Jurisdiction</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <div class="navbar">
+    <div class="menu-icon">
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+    </div>
+  </div>
+
+  <!-- SIDEMENU -->
+  <nav class="side-menu">
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="about.html">About</a></li>
+
+      <li class="dropdown">
+        <a href="#" id="dashToggle">Dashboard</a>
+        <ul class="submenu">
+          <li><a href="q1.html">How Offences Have Changed Over the Years</a></li>
+          <li><a href="q2.html">Police vs Camera: How Fines Are Detected</a></li>
+          <li><a href="q3.html">Which States Have Higher Offence Rates?</a></li>
+          <li><a href="q4.html">Camera Enforcement Impact</a></li>
+          <li><a href="q5.html">Compliance Improvements</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="overlay"></div>
+
+  <div class="container">
+    <header>
+      <h1>Which jurisdictions record the highest and lowest rates?</h1>
+      <p class="authors">By <span class="highlight">Yasmin Alysha</span> &amp; <span class="highlight">Khairul Annas</span></p>
+    </header>
+
+    <section class="q3-grid">
+      <div class="map-card">
+        <h2>Mobile Phone Offence Rates by Jurisdiction</h2>
+        <div class="q3-controls">
+          <div class="year-wrap">
+            <span id="yearMin">2008</span>
+            <input id="yearSlider" type="range" min="2008" max="2024" step="1" value="2024" />
+            <span id="yearMax">2024</span>
+            <span id="yearDisplay">2024</span>
+          </div>
+          
+        </div>
+        <div id="map"></div>
+        <div id="map-legend"></div>
+      </div>
+
+      <div class="bar-card">
+        <h2>Bar chart — Offences per 10,000 licences (latest year)</h2>
+        <svg id="barChart"></svg>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="js/script.js"></script>
+  <script src="js/q3.js"></script>
+</body>
+</html>

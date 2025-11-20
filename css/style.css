@@ -178,4 +178,46 @@ footer {
 #chart-container { width: 100%; max-width: 900px; margin: 12px auto 40px; }
 #chart-container svg { width: 100%; height: auto; display: block; }
 .chart-section h2 { color: #003366; margin-bottom: 8px; }
-.chart-tooltip { box-shadow: 0 6px 18px rgba(0,0,0,0.12); }
+.chart-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: #ffffff;
+  color: #002;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+  font-size: 13px;
+  z-index: 9999;
+  white-space: nowrap;
+}
+
+/* Q3 layout */
+.q3-grid { display: grid; grid-template-columns: 1fr; gap: 24px; align-items: start; margin-top: 20px; }
+/* remove separate card visual — map and chart sit directly in layout */
+.map-card, .bar-card { background: transparent; padding: 6px 6px 0 6px; border-radius: 6px; box-shadow: none; }
+#map { width: 100%; height: 440px; }
+#map svg { width: 100%; height: 100%; display:block; }
+#map-legend { margin-top: 8px; }
+#barChart { width: 100%; height: 360px; display:block; }
+.q3-answer { margin-top: 12px; color: #003366; font-weight: bold; text-align:center; }
+
+/* Q3 controls (slider + buttons) */
+#q3-controls { display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px; }
+.q3-controls { display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px; }
+.year-wrap { display:flex; align-items:center; gap:12px; width:100%; }
+#yearDisplay { margin-left: 12px; font-weight:700; color:#007acc; }
+input[type=range] { appearance: none; -webkit-appearance: none; height: 10px; background: #cbeefc; border-radius: 8px; outline: none; width:100%; flex:1; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width:20px; height:20px; border-radius:50%; background:#00aee8; box-shadow: 0 2px 6px rgba(0,0,0,0.2);} 
+.nav-buttons { display:flex; gap:14px; }
+.pill { background:#aee6fb; border:none; padding:10px 26px; border-radius:26px; color:#003366; font-weight:700; cursor:pointer; }
+.pill:hover { background:#89d7f8; }
+
+/* make grid stack on small screens */
+@media (max-width: 900px) {
+  .q3-grid { grid-template-columns: 1fr; }
+}
+
+.bar-card { display:flex; flex-direction:column; justify-content:flex-start; align-items:center; }
+.bar-card h2 { width:100%; text-align:center; }
+.map-card h2 { text-align:left; }
