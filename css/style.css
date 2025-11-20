@@ -60,6 +60,21 @@ body {
   transform: rotate(-45deg) translateY(-8px);
 }
 
+/* (Top-links removed for consistency with other pages) */
+
+/* Q4 toolbar */
+.q4-toolbar { display:flex; justify-content:space-between; align-items:center; gap:12px; margin: 6px 0 14px 0; }
+.q4-toolbar-left { display:flex; flex-direction:column; gap:8px; }
+.q4-toolbar-left .muted { margin:0; color:#033e5a; font-size:0.95rem; }
+.q4-toolbar-right { display:flex; align-items:center; gap:8px; }
+.q4-toolbar .primary { background:#007acc; color:#fff; border:none; padding:10px 18px; border-radius:10px; font-weight:700; cursor:pointer; box-shadow: 0 8px 20px rgba(0,120,200,0.14); }
+.q4-toolbar .primary:hover { background:#005fa3; }
+
+/* Make toolbar stack on narrow screens */
+@media (max-width:720px) {
+  .q4-toolbar { flex-direction:column; align-items:flex-start; }
+}
+
 /* SIDEMENU */
 .side-menu {
   position: fixed;
@@ -280,10 +295,111 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width:20px; 
   margin-right: 16px;
 }
 
-/* CHART / D3 STYLES */
-svg {
+/* CHART / D3 STYLES (scoped to Q1 & Q2 via body.svg-default) */
+.svg-default svg {
   width: 100%;
-  height: 400px;
+  height: 440px;
+}
+
+/* Page-scoped svg sizes & axis rules */
+.svg-q3 svg {
+  /* Q3: map-focused, a bit taller for map visibility */
+  width: 100%;
+  height: 100px;
+}
+.svg-q3 .axis text {
+  font-weight: 600;
+  fill: #024a6b;
+}
+
+.svg-q4 svg {
+  /* Q4: analytic chart, slightly shorter but with clearer axis font */
+  width: 100%;
+  height: 580px;
+}
+.svg-q4 .axis text {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 13px;
+  fill: #00263a;
+}
+
+/* Q3-specific SVG styling (map + bar chart) */
+#map {
+  background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(240,250,255,0.6));
+  border-radius: 10px;
+  padding: 6px;
+}
+#map svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  box-shadow: 0 8px 22px rgba(0,80,140,0.06);
+}
+
+#barChart {
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(0,90,160,0.06);
+  padding: 10px;
+}
+#barChart .bar {
+  fill: #007acc;
+  stroke: #005fa3;
+}
+
+/* Q4-specific SVG styling (Before/After chart) */
+#q4-svg {
+  background: linear-gradient(180deg,#ffffff,#f4fbff);
+  border-radius: 14px;
+  box-shadow: 0 14px 40px rgba(0,80,140,0.09);
+  padding: 12px;
+}
+#q4-svg .x-axis path,
+#q4-svg .x-axis line,
+#q4-svg .y-axis path,
+#q4-svg .y-axis line {
+  stroke: rgba(0,60,120,0.08);
+}
+#q4-svg .jur-group path {
+  stroke-width: 2.6px;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+#q4-legend { margin-top: 12px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+
+/* Horizontal legend entries for Q4 */
+#q4-legend .legend-list { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+#q4-legend .legend-entry { display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:8px; background: rgba(255,255,255,0.85); box-shadow: 0 6px 12px rgba(0,80,140,0.06); }
+#q4-legend .legend-entry input[type="checkbox"] { width:16px; height:16px; margin:0; transform:scale(1.03); }
+#q4-legend .legend-entry span { display:inline-block; vertical-align:middle; }
+#q4-legend .legend-entry span:nth-of-type(1) { width:12px; height:12px; border-radius:2px; }
+#q4-legend .legend-entry span:nth-of-type(2) { font-size:0.95rem; color:#003366; }
+
+@media (max-width:520px) {
+  #q4-legend .legend-entry { padding:6px 6px; gap:6px; }
+  #q4-legend .legend-entry span:nth-of-type(2) { font-size:0.9rem; }
+}
+
+/* Separate tooltip style for q4 to distinguish it visually */
+.chart-tooltip.q4-tooltip {
+  background: linear-gradient(180deg,#ffffff,#eaf6ff);
+  border: 1px solid rgba(0,120,200,0.12);
+  color: #00263a;
+}
+
+/* Camera editor (Q4) horizontal layout */
+#camera-editor { margin: 10px 0 18px 0; }
+.camera-grid { display:flex; flex-direction:column; gap:6px; overflow-x:auto; padding:6px 4px; }
+.camera-row { display:flex; gap:10px; align-items:center; }
+.camera-row.labels { font-weight:700; color:#003366; }
+.camera-cell { min-width:72px; display:flex; flex-direction:column; align-items:flex-start; }
+.camera-cell input, .camera-cell select { width:72px; padding:6px 8px; border-radius:6px; border:1px solid rgba(0,0,0,0.08); background:white; }
+.camera-cell select { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
+
+@media (max-width:640px) {
+  .camera-cell { min-width:56px; }
+  .camera-cell input, .camera-cell select { width:56px; }
 }
 
 .axis path,

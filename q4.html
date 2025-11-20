@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Q4 — Camera detection: Before vs After</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+</head>
+<body class="svg-q4">
+  <!-- NAVBAR -->
+  <div class="navbar">
+    <div class="menu-icon">
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+    </div>
+  </div>
+
+  <!-- SIDEMENU -->
+  <nav class="side-menu">
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="about.html">About</a></li>
+
+      <li class="dropdown">
+        <a href="#" id="dashToggle">Dashboard</a>
+        <ul class="submenu">
+          <li><a href="q1.html">How Offences Have Changed Over the Years</a></li>
+          <li><a href="q2.html">Police vs Camera: How Fines Are Detected</a></li>
+          <li><a href="q3.html">Which States Have Higher Offence Rates?</a></li>
+          <li><a href="q4.html">Camera Enforcement Impact</a></li>
+          <li><a href="q5.html">Compliance Improvements</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="overlay"></div>
+
+  <main class="page-container">
+    <h1>Camera detection: Before vs After</h1>
+
+    <section id="controls">
+      <div class="q4-toolbar">
+        <div class="q4-toolbar-left">
+          <p class="muted">Each jurisdiction has a camera introduction year — <strong>dashed = Before</strong>, <strong>solid = After</strong>.</p>
+          <div id="camera-editor"></div>
+        </div>
+        <div class="q4-toolbar-right">
+          <button id="update-camera" class="primary">Update chart</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="chart">
+      <svg id="q4-svg" width="960" height="520"></svg>
+      <div id="q4-legend"></div>
+    </section>
+  </main>
+
+  <script src="js/script.js"></script>
+  <script src="js/q4.js"></script>
+</body>
+</html>
