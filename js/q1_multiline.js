@@ -12,9 +12,13 @@ const q1Svg = d3.select("#q1-multiline")
 const q1Tooltip = d3.select("#tooltip");
 
 let q1Data, states, x, y, color;
-let q1Metric = "TOTAL_FINES";       // <–– CHANGES WHEN USER SELECTS
+let q1Metric = "TOTAL_FINES";
 let q1View = "all";
 let q1Single = null;
+
+// ⭐ ADDED — track which states are visible
+let legendVisible = {};
+
 
 // ---------------- LOAD CSV ----------------
 d3.csv("data/mobile_phone_cleaned.csv").then(raw => {
@@ -24,8 +28,7 @@ d3.csv("data/mobile_phone_cleaned.csv").then(raw => {
     d.LICENCE_TOTAL = +d.LICENCE_TOTAL || 0;
   });
 
-  // ---- AGGREGATE PROPERLY ----
-  // (Police + Camera totals + licence totals)
+  // Aggregate correctly (do NOT touch this)
   const aggregated = Array.from(
     d3.rollup(
       raw,
@@ -54,15 +57,19 @@ d3.csv("data/mobile_phone_cleaned.csv").then(raw => {
   q1Data = aggregated;
   states = [...new Set(q1Data.map(d => d.JURISDICTION))];
 
+  // ⭐ ADDED — init legend visibility
+  states.forEach(s => legendVisible[s] = true);
+
   setupUI();
   setupChart();
+  createLegend();   // ⭐ ADDED
   drawChart();
 });
+
 
 // ---------------- UI ----------------
 function setupUI() {
 
-  // metric switch
   document.querySelectorAll('input[name="metricQ1"]').forEach(r => {
     r.addEventListener("change", e => {
       q1Metric = e.target.value;
@@ -70,7 +77,6 @@ function setupUI() {
     });
   });
 
-  // view switch
   document.getElementById("q1-view").addEventListener("change", e => {
     q1View = e.target.value;
 
@@ -80,7 +86,6 @@ function setupUI() {
     drawChart();
   });
 
-  // single state dropdown
   const sel = document.getElementById("q1-state-select");
   states.forEach(s => {
     const opt = document.createElement("option");
@@ -94,6 +99,7 @@ function setupUI() {
     drawChart();
   });
 }
+
 
 // ---------------- CHART SETUP ----------------
 function setupChart() {
@@ -122,16 +128,71 @@ function setupChart() {
     .style("opacity", 0);
 }
 
+
+
+
+function createLegend() {
+
+  const legend = q1Svg.append("g")
+    .attr("class", "q1-legend")
+    .attr("transform", `translate(${q1Width + 20}, 0)`);
+
+  const item = legend.selectAll(".legend-item")
+    .data(states)
+    .enter()
+    .append("g")
+    .attr("class", "legend-item")
+    .attr("transform", (d, i) => `translate(0, ${i * 26})`)
+    .style("cursor", "pointer")
+    .on("click", (e, state) => {
+      legendVisible[state] = !legendVisible[state];
+
+      // Update square opacity immediately
+      legend.selectAll(".legend-square")
+        .filter(d => d === state)
+        .transition().duration(200)
+        .attr("opacity", legendVisible[state] ? 1 : 0.25);
+
+      // Update label appearance
+      legend.selectAll(".legend-label")
+        .filter(d => d === state)
+        .transition().duration(200)
+        .attr("fill-opacity", legendVisible[state] ? 1 : 0.4);
+
+      drawChart();
+    });
+
+
+  // COLOR BOX
+  item.append("rect")
+    .attr("class", "legend-square")
+    .attr("width", 16)
+    .attr("height", 16)
+    .attr("rx", 3)
+    .attr("fill", d => color(d))
+    .attr("opacity", 1);
+
+  // LABEL
+  item.append("text")
+    .attr("class", "legend-label")
+    .attr("x", 24)
+    .attr("y", 12)
+    .attr("font-size", "13px")
+    .attr("font-weight", 600)
+    .attr("fill", "#0A2342")
+    .text(d => d);
+}
+
+
+
 // ---------------- DRAW ----------------
 function drawChart() {
   let filtered = q1Data;
 
-  // SINGLE
   if (q1View === "single" && q1Single) {
     filtered = filtered.filter(d => d.JURISDICTION === q1Single);
   }
 
-  // TOP 3
   if (q1View === "top3") {
     const totals = d3.rollup(filtered, v => d3.sum(v, d => d[q1Metric]), d => d.JURISDICTION);
     const top3 = Array.from(totals.entries())
@@ -142,7 +203,6 @@ function drawChart() {
     filtered = filtered.filter(d => top3.includes(d.JURISDICTION));
   }
 
-  // BOTTOM 3
   if (q1View === "bottom3") {
     const totals = d3.rollup(filtered, v => d3.sum(v, d => d[q1Metric]), d => d.JURISDICTION);
     const bot3 = Array.from(totals.entries())
@@ -153,7 +213,6 @@ function drawChart() {
     filtered = filtered.filter(d => bot3.includes(d.JURISDICTION));
   }
 
-  // Y scale
   y.domain([
     0,
     d3.max(filtered, d => d[q1Metric])
@@ -166,7 +225,6 @@ function drawChart() {
   q1Svg.select(".x-axis")
     .call(d3.axisBottom(x).tickFormat(d3.format("d")));
 
-  // group data
   const nested = d3.group(filtered, d => d.JURISDICTION);
 
   const line = d3.line()
@@ -175,9 +233,11 @@ function drawChart() {
     .y(d => y(d[q1Metric]));
 
   const paths = q1Svg.selectAll(".line-series")
-    .data(nested, d => d[0]);
+    .data(
+      Array.from(nested).filter(([state]) => legendVisible[state]),  // ⭐ FILTER BY LEGEND
+      d => d[0]
+    );
 
-  // ENTER
   paths.enter()
     .append("path")
     .attr("class", "line-series")
@@ -190,16 +250,16 @@ function drawChart() {
     .transition().duration(1500)
     .attr("stroke-dashoffset", 0);
 
-  // UPDATE
   paths.transition().duration(700)
     .attr("stroke", d => color(d[0]))
     .attr("d", d => line(d[1].sort((a,b)=>a.YEAR-b.YEAR)));
 
-  // EXIT
   paths.exit().remove();
 
   addHover(nested);
 }
+
+
 
 // ---------------- HOVER ----------------
 function addHover(nested) {
@@ -212,12 +272,14 @@ function addHover(nested) {
 
     hoverLine.attr("x1", mx).attr("x2", mx).style("opacity", 1);
 
-    const rows = Array.from(nested).map(([state, arr]) => {
-      const r = arr.find(v => v.YEAR === year);
-      return r ? { state, value: r[q1Metric] } : null;
-    }).filter(Boolean);
-
-    rows.sort((a,b)=>b.value-a.value);
+    const rows = Array.from(nested)
+      .filter(([state]) => legendVisible[state])   // ⭐ FIX TOOLTIP TOO
+      .map(([state, arr]) => {
+        const r = arr.find(v => v.YEAR === year);
+        return r ? { state, value: r[q1Metric] } : null;
+      })
+      .filter(Boolean)
+      .sort((a,b)=>b.value-a.value);
 
     q1Tooltip.style("opacity",1)
       .html(`
@@ -235,4 +297,3 @@ function addHover(nested) {
     q1Tooltip.style("opacity",0);
   });
 }
-
