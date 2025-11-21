@@ -1,14 +1,41 @@
 const q1SmallTooltip = d3.select("#tooltip");
-d3.csv("data/mobile_phone_cleaned.csv").then(rawData => {
 
-  const data = rawData.map(d => ({
-    YEAR: +d.YEAR,
-    JURISDICTION: d.JURISDICTION,
-    DETECTION_METHOD: d.DETECTION_METHOD,
-    TOTAL_FINES: +d.TOTAL_FINES
-  }));
+d3.csv("data/mobile_phone_cleaned.csv").then(raw => {
 
-  const states = [...new Set(data.map(d => d.JURISDICTION))];
+
+  raw.forEach(d => {
+    d.YEAR = +d.YEAR;
+    d.TOTAL_FINES = +d.TOTAL_FINES || 0;
+    d.LICENCE_TOTAL = +d.LICENCE_TOTAL || 0;
+  });
+
+
+  const aggregated = Array.from(
+    d3.rollup(
+      raw,
+      v => {
+        const totalFines = d3.sum(v, d => d.TOTAL_FINES);
+        const totalLic = d3.sum(v, d => d.LICENCE_TOTAL);
+        const per10k = totalLic ? (totalFines / totalLic) * 10000 : 0;
+
+        return {
+          TOTAL_FINES: totalFines,
+          FINES_PER_10K_LICENCES: per10k
+        };
+      },
+      d => d.JURISDICTION,
+      d => d.YEAR
+    ),
+    ([state, yearMap]) =>
+      Array.from(yearMap, ([year, vals]) => ({
+        JURISDICTION: state,
+        YEAR: +year,
+        TOTAL_FINES: vals.TOTAL_FINES,
+        FINES_PER_10K_LICENCES: vals.FINES_PER_10K_LICENCES
+      }))
+  ).flat();
+
+  const states = [...new Set(aggregated.map(d => d.JURISDICTION))];
 
   const width = 230,
         height = 160;
@@ -26,12 +53,19 @@ d3.csv("data/mobile_phone_cleaned.csv").then(rawData => {
 
   states.forEach(state => {
 
-    let stateData = data.filter(d => d.JURISDICTION === state);
-
+    // Isolate + sort
+    let stateData = aggregated.filter(d => d.JURISDICTION === state);
     stateData = stateData.sort((a, b) => a.YEAR - b.YEAR);
 
+    // Max value for scaling
     const maxVal = d3.max(stateData, d => d.TOTAL_FINES) || 1;
 
+    // Flexible ticks
+    let yTicks = 4;
+    if (maxVal < 5000) yTicks = 3;
+    if (maxVal > 20000) yTicks = 5;
+
+    // Scales
     const x = d3.scaleLinear()
       .domain(d3.extent(stateData, d => d.YEAR))
       .range([margin.left, width - margin.right]);
@@ -41,16 +75,13 @@ d3.csv("data/mobile_phone_cleaned.csv").then(rawData => {
       .nice()
       .range([height - margin.bottom, margin.top]);
 
-    // Flexible tick count based on data scale (fixes ACT)
-    let yTicks = 4;
-    if (maxVal < 5000) yTicks = 3;
-    if (maxVal > 20000) yTicks = 5;
-
+    // SVG Cell
     const svg = container.append("svg")
       .attr("width", width)
       .attr("height", height)
       .attr("data-state", state)
       .on("click", function () {
+        // Spotlight effect
         const all = d3.selectAll("#q1-small svg");
         const selected = d3.select(this).classed("selected");
 
@@ -62,7 +93,7 @@ d3.csv("data/mobile_phone_cleaned.csv").then(rawData => {
         }
       });
 
-    // X AXIS
+    // X-Axis
     svg.append("g")
       .attr("class", "axis")
       .attr("transform", `translate(0, ${height - margin.bottom})`)
@@ -74,7 +105,7 @@ d3.csv("data/mobile_phone_cleaned.csv").then(rawData => {
       .selectAll("text")
       .style("font-size", "10px");
 
-    // Y AXIS (FIXED)
+    // Y-Axis
     svg.append("g")
       .attr("class", "axis")
       .attr("transform", `translate(${margin.left}, 0)`)
@@ -86,13 +117,13 @@ d3.csv("data/mobile_phone_cleaned.csv").then(rawData => {
       .selectAll("text")
       .style("font-size", "10px");
 
-    // LINE GENERATOR
+    // Line generator
     const line = d3.line()
       .curve(d3.curveMonotoneX)
       .x(d => x(d.YEAR))
       .y(d => y(d.TOTAL_FINES));
 
-    // ANIMATED PATH
+    // Line path (animated)
     const path = svg.append("path")
       .datum(stateData)
       .attr("fill", "none")
@@ -100,17 +131,15 @@ d3.csv("data/mobile_phone_cleaned.csv").then(rawData => {
       .attr("stroke-width", 2)
       .attr("d", line);
 
-    const totalLength = path.node().getTotalLength();
+    const len = path.node().getTotalLength();
+    path.attr("stroke-dasharray", `${len} ${len}`)
+        .attr("stroke-dashoffset", len)
+        .transition()
+        .duration(700)
+        .ease(d3.easeCubic)
+        .attr("stroke-dashoffset", 0);
 
-    path
-      .attr("stroke-dasharray", totalLength + " " + totalLength)
-      .attr("stroke-dashoffset", totalLength)
-      .transition()
-      .duration(700)
-      .ease(d3.easeCubic)
-      .attr("stroke-dashoffset", 0);
-
-    // DOTS
+    // Dots
     svg.selectAll(".dot")
       .data(stateData)
       .enter()
@@ -139,7 +168,7 @@ d3.csv("data/mobile_phone_cleaned.csv").then(rawData => {
       })
       .on("mouseout", () => q1SmallTooltip.style("opacity", 0));
 
-    // STATE TITLE LABEL
+    // State title
     svg.append("text")
       .attr("x", margin.left)
       .attr("y", margin.top - 10)

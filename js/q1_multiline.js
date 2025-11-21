@@ -1,4 +1,4 @@
-const q1Margin = { top: 40, right: 180, bottom: 40, left: 60 },
+const q1Margin = { top: 40, right: 120, bottom: 40, left: 70 },
       q1Width  = 1000 - q1Margin.left - q1Margin.right,
       q1Height = 420 - q1Margin.top - q1Margin.bottom;
 
@@ -11,38 +11,58 @@ const q1Svg = d3.select("#q1-multiline")
 
 const q1Tooltip = d3.select("#tooltip");
 
-let q1Data, jurisdictions, x, y, color;
+let q1Data, states, x, y, color;
+let q1Metric = "TOTAL_FINES";       // <–– CHANGES WHEN USER SELECTS
+let q1View = "all";
+let q1Single = null;
 
-// NEW STATE VARIABLES ⭐
-let q1Metric = "TOTAL_FINES";
-let q1ViewMode = "all";         // all | top3 | bottom3 | single
-let q1SelectedState = null;
-
-// ---------------- LOAD DATA ----------------
+// ---------------- LOAD CSV ----------------
 d3.csv("data/mobile_phone_cleaned.csv").then(raw => {
   raw.forEach(d => {
     d.YEAR = +d.YEAR;
-    d.TOTAL_FINES = +d.TOTAL_FINES;
-    d.FINES_PER_10K_LICENCES = +d.FINES_PER_10K_LICENCES || 0;
+    d.TOTAL_FINES = +d.TOTAL_FINES || 0;
+    d.LICENCE_TOTAL = +d.LICENCE_TOTAL || 0;
   });
 
-  q1Data = raw;
-  jurisdictions = [...new Set(q1Data.map(d => d.JURISDICTION))];
+  // ---- AGGREGATE PROPERLY ----
+  // (Police + Camera totals + licence totals)
+  const aggregated = Array.from(
+    d3.rollup(
+      raw,
+      v => {
+        const totalFines = d3.sum(v, d => d.TOTAL_FINES);
+        const totalLic = d3.sum(v, d => d.LICENCE_TOTAL);
+        const per10k = totalLic ? (totalFines / totalLic) * 10000 : 0;
 
-  setupUI();       
+        return {
+          TOTAL_FINES: totalFines,
+          FINES_PER_10K_LICENCES: per10k
+        };
+      },
+      d => d.JURISDICTION,
+      d => d.YEAR
+    ),
+    ([jur, yearMap]) =>
+      Array.from(yearMap, ([year, vals]) => ({
+        JURISDICTION: jur,
+        YEAR: +year,
+        TOTAL_FINES: vals.TOTAL_FINES,
+        FINES_PER_10K_LICENCES: vals.FINES_PER_10K_LICENCES
+      }))
+  ).flat();
+
+  q1Data = aggregated;
+  states = [...new Set(q1Data.map(d => d.JURISDICTION))];
+
+  setupUI();
   setupChart();
-  drawChart();    
+  drawChart();
 });
 
-// ---------------- UI SETUP ----------------
+// ---------------- UI ----------------
 function setupUI() {
-  // populate "single state" selector
-  const singleSel = d3.select("#q1-state-select");
-  jurisdictions.forEach(s => {
-    singleSel.append("option").attr("value", s).text(s);
-  });
 
-  // Metric selector
+  // metric switch
   document.querySelectorAll('input[name="metricQ1"]').forEach(r => {
     r.addEventListener("change", e => {
       q1Metric = e.target.value;
@@ -50,26 +70,32 @@ function setupUI() {
     });
   });
 
-  // View selector
+  // view switch
   document.getElementById("q1-view").addEventListener("change", e => {
-    q1ViewMode = e.target.value;
+    q1View = e.target.value;
 
-    if (q1ViewMode === "single") {
-      document.getElementById("q1-state-select").style.display = "inline-block";
-    } else {
-      document.getElementById("q1-state-select").style.display = "none";
-    }
+    document.getElementById("q1-state-select").style.display =
+      q1View === "single" ? "inline-block" : "none";
 
     drawChart();
   });
 
-  // Single jurisdiction selection
-  document.getElementById("q1-state-select").addEventListener("change", e => {
-    q1SelectedState = e.target.value;
+  // single state dropdown
+  const sel = document.getElementById("q1-state-select");
+  states.forEach(s => {
+    const opt = document.createElement("option");
+    opt.value = s;
+    opt.textContent = s;
+    sel.appendChild(opt);
+  });
+
+  sel.addEventListener("change", e => {
+    q1Single = e.target.value;
     drawChart();
   });
 }
 
+// ---------------- CHART SETUP ----------------
 function setupChart() {
   x = d3.scaleLinear()
     .domain(d3.extent(q1Data, d => d.YEAR))
@@ -77,55 +103,73 @@ function setupChart() {
 
   y = d3.scaleLinear().range([q1Height, 0]);
 
-  color = d3.scaleOrdinal().domain(jurisdictions).range(d3.schemeTableau10);
+  color = d3.scaleOrdinal()
+    .domain(states)
+    .range(d3.schemeTableau10);
 
-  q1Svg.append("g").attr("class", "x-axis")
+  q1Svg.append("g")
+    .attr("class", "x-axis")
     .attr("transform", `translate(0,${q1Height})`);
 
   q1Svg.append("g").attr("class", "y-axis");
 
-  q1Svg.append("g").attr("class", "brush");
-
   q1Svg.append("line")
     .attr("class", "hover-line")
-    .attr("stroke", "#007acc")
-    .attr("stroke-width", 1.8)
+    .attr("stroke", "#003366")
+    .attr("stroke-width", 1.2)
     .attr("y1", 0)
     .attr("y2", q1Height)
     .style("opacity", 0);
 }
 
-
+// ---------------- DRAW ----------------
 function drawChart() {
   let filtered = q1Data;
 
-  if (q1ViewMode === "single") {
-    filtered = filtered.filter(d => d.JURISDICTION === q1SelectedState);
+  // SINGLE
+  if (q1View === "single" && q1Single) {
+    filtered = filtered.filter(d => d.JURISDICTION === q1Single);
   }
 
-  if (q1ViewMode === "top3") {
+  // TOP 3
+  if (q1View === "top3") {
     const totals = d3.rollup(filtered, v => d3.sum(v, d => d[q1Metric]), d => d.JURISDICTION);
-    const top3 = Array.from(totals.entries()).sort((a, b) => b[1] - a[1]).slice(0, 3).map(d => d[0]);
+    const top3 = Array.from(totals.entries())
+      .sort((a,b)=>b[1]-a[1])
+      .slice(0,3)
+      .map(d=>d[0]);
+
     filtered = filtered.filter(d => top3.includes(d.JURISDICTION));
   }
 
-  if (q1ViewMode === "bottom3") {
+  // BOTTOM 3
+  if (q1View === "bottom3") {
     const totals = d3.rollup(filtered, v => d3.sum(v, d => d[q1Metric]), d => d.JURISDICTION);
-    const bottom3 = Array.from(totals.entries()).sort((a, b) => a[1] - b[1]).slice(0, 3).map(d => d[0]);
-    filtered = filtered.filter(d => bottom3.includes(d.JURISDICTION));
+    const bot3 = Array.from(totals.entries())
+      .sort((a,b)=>a[1]-b[1])
+      .slice(0,3)
+      .map(d=>d[0]);
+
+    filtered = filtered.filter(d => bot3.includes(d.JURISDICTION));
   }
 
-  
-  const maxY = d3.max(filtered, d => d[q1Metric]) || 1;
-  y.domain([0, maxY]).nice();
+  // Y scale
+  y.domain([
+    0,
+    d3.max(filtered, d => d[q1Metric])
+  ]).nice();
 
-  q1Svg.select(".y-axis").transition().duration(600).call(d3.axisLeft(y));
-  q1Svg.select(".x-axis").call(d3.axisBottom(x).tickFormat(d3.format("d")));
+  q1Svg.select(".y-axis")
+    .transition().duration(500)
+    .call(d3.axisLeft(y));
 
-  
+  q1Svg.select(".x-axis")
+    .call(d3.axisBottom(x).tickFormat(d3.format("d")));
+
+  // group data
   const nested = d3.group(filtered, d => d.JURISDICTION);
 
-  const lineGen = d3.line()
+  const line = d3.line()
     .curve(d3.curveMonotoneX)
     .x(d => x(d.YEAR))
     .y(d => y(d[q1Metric]));
@@ -133,73 +177,62 @@ function drawChart() {
   const paths = q1Svg.selectAll(".line-series")
     .data(nested, d => d[0]);
 
+  // ENTER
   paths.enter()
     .append("path")
     .attr("class", "line-series")
-    .attr("stroke", d => color(d[0]))
     .attr("fill", "none")
     .attr("stroke-width", 2)
-    .attr("d", d => lineGen(d[1]))
-    .attr("stroke-dasharray", function () { return this.getTotalLength(); })
-    .attr("stroke-dashoffset", function () { return this.getTotalLength(); })
-    .transition().duration(2000)
+    .attr("stroke", d => color(d[0]))
+    .attr("d", d => line(d[1].sort((a,b)=>a.YEAR-b.YEAR)))
+    .attr("stroke-dasharray", function() { return this.getTotalLength(); })
+    .attr("stroke-dashoffset", function() { return this.getTotalLength(); })
+    .transition().duration(1500)
     .attr("stroke-dashoffset", 0);
 
-  paths.transition().duration(900)
-    .attr("d", d => lineGen(d[1]));
+  // UPDATE
+  paths.transition().duration(700)
+    .attr("stroke", d => color(d[0]))
+    .attr("d", d => line(d[1].sort((a,b)=>a.YEAR-b.YEAR)));
 
+  // EXIT
   paths.exit().remove();
 
-  // 5️⃣ REACTIVATE INTERACTIVITY
-  addHoverEffects(nested);
-  addBrushing();
+  addHover(nested);
 }
 
-function addHoverEffects(nestedMap) {
+// ---------------- HOVER ----------------
+function addHover(nested) {
   const hoverLine = q1Svg.select(".hover-line");
 
-  q1Svg.on("mousemove", (event) => {
-    const [mx] = d3.pointer(event);
+  q1Svg.on("mousemove", e => {
+    const [mx] = d3.pointer(e);
     const year = Math.round(x.invert(mx));
-
     if (year < 2008 || year > 2024) return;
 
     hoverLine.attr("x1", mx).attr("x2", mx).style("opacity", 1);
 
-    const values = Array.from(nestedMap).map(([state, arr]) => {
-      const entry = arr.find(d => d.YEAR === year);
-      return entry ? { state, value: entry[q1Metric] } : null;
+    const rows = Array.from(nested).map(([state, arr]) => {
+      const r = arr.find(v => v.YEAR === year);
+      return r ? { state, value: r[q1Metric] } : null;
     }).filter(Boolean);
 
-    const avg = d3.mean(values, d => d.value);
+    rows.sort((a,b)=>b.value-a.value);
 
-    q1Tooltip.style("opacity", 1)
+    q1Tooltip.style("opacity",1)
       .html(`
         <strong>${year}</strong><br>
-        <em>National avg:</em> ${avg.toFixed(1)}<br><br>
-        ${values.map(v =>
-          `<span style="color:${color(v.state)}">${v.state}</span>: ${v.value.toLocaleString()}`
-        ).join("<br>")}`)
-      .style("left", (event.pageX + 15) + "px")
-      .style("top", (event.pageY - 20) + "px");
+        ${rows.map(i =>
+          `<span style="color:${color(i.state)}">${i.state}</span>: ${i.value.toLocaleString()}`
+        ).join("<br>")}
+      `)
+      .style("left",(e.pageX+15)+"px")
+      .style("top",(e.pageY-20)+"px");
   });
 
   q1Svg.on("mouseleave", () => {
-    hoverLine.style("opacity", 0);
-    q1Tooltip.style("opacity", 0);
+    hoverLine.style("opacity",0);
+    q1Tooltip.style("opacity",0);
   });
 }
 
-function addBrushing() {
-  const brush = d3.brushX()
-    .extent([[0, 0], [q1Width, q1Height]])
-    .on("end", event => {
-      if (!event.selection) return;
-      const [x0, x1] = event.selection;
-      x.domain([Math.round(x.invert(x0)), Math.round(x.invert(x1))]);
-      q1Svg.select(".brush").call(brush.move, null);
-      drawChart();
-    });
-
-  q1Svg.select(".brush").call(brush);
-}
