@@ -2,13 +2,11 @@ const q1SmallTooltip = d3.select("#tooltip");
 
 d3.csv("data/mobile_phone_cleaned.csv").then(raw => {
 
-
   raw.forEach(d => {
     d.YEAR = +d.YEAR;
     d.TOTAL_FINES = +d.TOTAL_FINES || 0;
     d.LICENCE_TOTAL = +d.LICENCE_TOTAL || 0;
   });
-
 
   const aggregated = Array.from(
     d3.rollup(
@@ -44,28 +42,31 @@ d3.csv("data/mobile_phone_cleaned.csv").then(raw => {
 
   const container = d3.select("#q1-small");
 
+  // ⭐ UPDATED COLOR SCALE TO MATCH MULTILINE EXACTLY
   const color = d3.scaleOrdinal()
     .domain(states)
     .range([
-      "#77AADD","#99DDFF","#DDAACC","#CCEEFF",
-      "#FFAABB","#88CCEE","#EE8866","#DDCC77"
+      "#4e79a7", // ACT
+      "#f28e2b", // NSW
+      "#e15759", // NT
+      "#76b7b2", // QLD
+      "#59a14f", // SA
+      "#edc948", // TAS
+      "#b07aa1", // VIC
+      "#ff9da7"  // WA
     ]);
 
   states.forEach(state => {
 
-    // Isolate + sort
     let stateData = aggregated.filter(d => d.JURISDICTION === state);
     stateData = stateData.sort((a, b) => a.YEAR - b.YEAR);
 
-    // Max value for scaling
     const maxVal = d3.max(stateData, d => d.TOTAL_FINES) || 1;
 
-    // Flexible ticks
     let yTicks = 4;
     if (maxVal < 5000) yTicks = 3;
     if (maxVal > 20000) yTicks = 5;
 
-    // Scales
     const x = d3.scaleLinear()
       .domain(d3.extent(stateData, d => d.YEAR))
       .range([margin.left, width - margin.right]);
@@ -75,13 +76,11 @@ d3.csv("data/mobile_phone_cleaned.csv").then(raw => {
       .nice()
       .range([height - margin.bottom, margin.top]);
 
-    // SVG Cell
     const svg = container.append("svg")
       .attr("width", width)
       .attr("height", height)
       .attr("data-state", state)
       .on("click", function () {
-        // Spotlight effect
         const all = d3.selectAll("#q1-small svg");
         const selected = d3.select(this).classed("selected");
 
@@ -93,7 +92,7 @@ d3.csv("data/mobile_phone_cleaned.csv").then(raw => {
         }
       });
 
-    // X-Axis
+    // X-axis
     svg.append("g")
       .attr("class", "axis")
       .attr("transform", `translate(0, ${height - margin.bottom})`)
@@ -105,7 +104,7 @@ d3.csv("data/mobile_phone_cleaned.csv").then(raw => {
       .selectAll("text")
       .style("font-size", "10px");
 
-    // Y-Axis
+    // Y-axis
     svg.append("g")
       .attr("class", "axis")
       .attr("transform", `translate(${margin.left}, 0)`)
@@ -117,13 +116,11 @@ d3.csv("data/mobile_phone_cleaned.csv").then(raw => {
       .selectAll("text")
       .style("font-size", "10px");
 
-    // Line generator
     const line = d3.line()
       .curve(d3.curveMonotoneX)
       .x(d => x(d.YEAR))
       .y(d => y(d.TOTAL_FINES));
 
-    // Line path (animated)
     const path = svg.append("path")
       .datum(stateData)
       .attr("fill", "none")
@@ -139,7 +136,6 @@ d3.csv("data/mobile_phone_cleaned.csv").then(raw => {
         .ease(d3.easeCubic)
         .attr("stroke-dashoffset", 0);
 
-    // Dots
     svg.selectAll(".dot")
       .data(stateData)
       .enter()
@@ -168,7 +164,6 @@ d3.csv("data/mobile_phone_cleaned.csv").then(raw => {
       })
       .on("mouseout", () => q1SmallTooltip.style("opacity", 0));
 
-    // State title
     svg.append("text")
       .attr("x", margin.left)
       .attr("y", margin.top - 10)
