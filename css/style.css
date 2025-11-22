@@ -189,10 +189,28 @@ footer {
 }
 
 /* Chart styles */
-.chart-section { margin-top: 40px; text-align: left; }
-#chart-container { width: 100%; max-width: 900px; margin: 12px auto 40px; }
-#chart-container svg { width: 100%; height: auto; display: block; }
-.chart-section h2 { color: #003366; margin-bottom: 8px; }
+.chart-section { 
+  margin-top: 40px; 
+  text-align: left; 
+}
+
+#chart-container { 
+  width: 100%; 
+  max-width: 900px; 
+  margin: 12px auto 40px; 
+}
+
+#chart-container svg { 
+  width: 100%; 
+  height: auto; 
+  display: block; 
+}
+
+.chart-section h2 { 
+  color: #003366; 
+  margin-bottom: 8px; 
+}
+
 .chart-tooltip {
   position: absolute;
   pointer-events: none;
@@ -208,14 +226,67 @@ footer {
 }
 
 /* Q3 layout */
-.q3-grid { display: grid; grid-template-columns: 1fr; gap: 24px; align-items: start; margin-top: 20px; }
+.q3-grid { 
+  display: grid; 
+  grid-template-columns: 1fr; 
+  gap: 24px; 
+  align-items: start; 
+  margin-top: 20px; 
+}
+
 /* remove separate card visual — map and chart sit directly in layout */
-.map-card, .bar-card { background: transparent; padding: 6px 6px 0 6px; border-radius: 6px; box-shadow: none; }
-#map { width: 100%; height: 440px; }
-#map svg { width: 100%; height: 100%; display:block; }
-#map-legend { margin-top: 8px; }
-#barChart { width: 100%; height: 360px; display:block; }
-.q3-answer { margin-top: 12px; color: #003366; font-weight: bold; text-align:center; }
+.map-card, .bar-card { 
+  background: transparent; 
+  padding: 6px 6px 0 6px; 
+  border-radius: 6px; 
+  box-shadow: none; 
+}
+
+#map { 
+  width: 100%; 
+  height: 440px; 
+}
+
+#map svg { 
+  width: 100%; 
+  height: 100%; 
+  display:block; 
+}
+
+#map-legend { 
+  margin-top: 8px; 
+}
+
+#barChart { 
+  width: 100%; 
+  height: 360px; 
+  display:block; 
+}
+
+  .about-card { 
+    display:flex; 
+    flex-direction:column; 
+    align-items:center; 
+  }
+  .about-card img { 
+    width:100%; 
+    height:calc(100% - 36px); 
+    object-fit:cover; 
+    border-radius:6px 6px 0 0; 
+    display:block; 
+  }
+  .about-card .about-name { 
+    margin-top:8px; 
+    padding:6px 4px; 
+    font-weight:700; 
+    color:#003366; 
+  }
+.q3-answer { 
+  margin-top: 12px;
+  color: #003366; 
+  font-weight: bold;
+  text-align:center; 
+}
 
 /* Q3 controls (slider + buttons) */
 #q3-controls { display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px; }
@@ -283,6 +354,43 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width:20px; 
 
 .grid-box {
   padding: 16px;
+}
+
+/* About page styles */
+.about-hero { 
+  background: rgba(0, 150, 210, 0.12); 
+  padding: 40px 24px; 
+  border-radius: 8px; 
+  margin-top: 12px; 
+}
+
+.about-images { 
+  display:flex; 
+  gap:60px; 
+  justify-content:center; 
+  align-items:flex-start; 
+  margin-bottom: 28px; 
+}
+
+.about-card { 
+  width:200px; 
+  height:180px; 
+  background:#F0FFFF; 
+  border-radius:6px; 
+  box-shadow: 0 8px 18px rgba(0,0,0,0.06); 
+}
+
+.about-desc { 
+  max-width:900px; 
+  margin: 0 auto; 
+  color:#003366; 
+  line-height:1.6;  
+  font-size:16px; 
+}
+
+@media (max-width:800px) {
+  .about-images { gap:24px; flex-direction:column; align-items:center; }
+  .about-card { width:72%; height:160px; }
 }
 
 /* Chart controls */
