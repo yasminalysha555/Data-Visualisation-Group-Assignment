@@ -11,6 +11,14 @@
   const barMargin = {top: 30, right: 20, bottom: 60, left: 120};
 
   const mapSvg = mapDiv.append('svg').attr('width', width).attr('height', height);
+  // group that contains all map shapes — we'll apply zoom/pan to this group
+  const mapLayer = mapSvg.append('g').attr('class', 'map-layer');
+
+  // attach zoom behaviour to the SVG; transforms will be applied to `mapLayer`
+  const zoom = d3.zoom().scaleExtent([1, 8]).on('zoom', (event) => {
+    mapLayer.attr('transform', event.transform);
+  });
+  mapSvg.call(zoom).style('cursor', 'grab');
 
   // jurisdictions in consistent order
   const jurisdictions = ['NSW','QLD','VIC','TAS','SA','WA','NT','ACT'];
@@ -115,7 +123,7 @@
 
         const getCode = f => (f.properties && (f.properties.iso_3166_2 || nameToCode[f.properties.name])) || null;
 
-        const paths = mapSvg.selectAll('path.region').data(features, d => getCode(d) || d.id || d.properties && d.properties.name);
+        const paths = mapLayer.selectAll('path.region').data(features, d => getCode(d) || d.id || d.properties && d.properties.name);
         paths.join(
           enter => enter.append('path')
             .attr('class','region')
@@ -135,11 +143,12 @@
         );
 
         // remove any old placeholder rectangles/labels
-        mapSvg.selectAll('rect.region').remove();
-        mapSvg.selectAll('text.label').remove();
+        // remove any old placeholder rectangles/labels from the map layer
+        mapLayer.selectAll('rect.region').remove();
+        mapLayer.selectAll('text.label').remove();
       } else {
         // fallback: simple rectangles (existing behaviour)
-        const regions = mapSvg.selectAll('rect.region').data(shapes, d=>d.id);
+        const regions = mapLayer.selectAll('rect.region').data(shapes, d=>d.id);
         regions.join(
           enter => enter.append('rect')
             .attr('class','region')
@@ -158,7 +167,7 @@
         );
 
         // labels
-        const labs = mapSvg.selectAll('text.label').data(shapes, d=>d.id);
+        const labs = mapLayer.selectAll('text.label').data(shapes, d=>d.id);
         labs.join(
           enter => enter.append('text').attr('class','label').attr('x', d=>d.x+6).attr('y', d=>d.y+14).attr('font-size',11).attr('fill','#002').text(d=>d.id),
           update => update,
