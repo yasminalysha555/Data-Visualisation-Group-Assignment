@@ -35,25 +35,21 @@ d3.csv("data/mobile_phone_cleaned.csv").then(raw => {
 
   const states = [...new Set(aggregated.map(d => d.JURISDICTION))];
 
-  const width = 230,
-        height = 160;
+  /* 🔥 IMPROVED SIZE FOR VISIBILITY */
+  const width = 320;
+  const height = 220;
 
-  const margin = { top: 25, right: 10, bottom: 22, left: 45 };
+  /* 🔥 MORE SPACE FOR LABELS */
+  const margin = { top: 35, right: 18, bottom: 45, left: 60 };
 
   const container = d3.select("#q1-small");
 
-  // ⭐ UPDATED COLOR SCALE TO MATCH MULTILINE EXACTLY
+  /* COLOR SCALE (unchanged) */
   const color = d3.scaleOrdinal()
     .domain(states)
     .range([
-      "#4e79a7", // ACT
-      "#f28e2b", // NSW
-      "#e15759", // NT
-      "#76b7b2", // QLD
-      "#59a14f", // SA
-      "#edc948", // TAS
-      "#b07aa1", // VIC
-      "#ff9da7"  // WA
+      "#4e79a7", "#f28e2b", "#e15759", "#76b7b2",
+      "#59a14f", "#edc948", "#b07aa1", "#ff9da7"
     ]);
 
   states.forEach(state => {
@@ -62,10 +58,6 @@ d3.csv("data/mobile_phone_cleaned.csv").then(raw => {
     stateData = stateData.sort((a, b) => a.YEAR - b.YEAR);
 
     const maxVal = d3.max(stateData, d => d.TOTAL_FINES) || 1;
-
-    let yTicks = 4;
-    if (maxVal < 5000) yTicks = 3;
-    if (maxVal > 20000) yTicks = 5;
 
     const x = d3.scaleLinear()
       .domain(d3.extent(stateData, d => d.YEAR))
@@ -76,10 +68,13 @@ d3.csv("data/mobile_phone_cleaned.csv").then(raw => {
       .nice()
       .range([height - margin.bottom, margin.top]);
 
+    /* 🔥 SVG FIX: override CSS and force custom width/height */
     const svg = container.append("svg")
       .attr("width", width)
       .attr("height", height)
       .attr("data-state", state)
+      .style("width", width + "px")   // override CSS
+      .style("height", height + "px") // override CSS
       .on("click", function () {
         const all = d3.selectAll("#q1-small svg");
         const selected = d3.select(this).classed("selected");
@@ -92,30 +87,32 @@ d3.csv("data/mobile_phone_cleaned.csv").then(raw => {
         }
       });
 
-    // X-axis
+    /* X-AXIS */
     svg.append("g")
       .attr("class", "axis")
       .attr("transform", `translate(0, ${height - margin.bottom})`)
       .call(
         d3.axisBottom(x)
-          .ticks(4)
+          .ticks(5)
           .tickFormat(d3.format("d"))
       )
       .selectAll("text")
-      .style("font-size", "10px");
+      .style("font-size", "12px")
+      .style("dy", "1.3em");
 
-    // Y-axis
+    /* Y-AXIS */
     svg.append("g")
       .attr("class", "axis")
       .attr("transform", `translate(${margin.left}, 0)`)
       .call(
         d3.axisLeft(y)
-          .ticks(yTicks)
+          .ticks(5)
           .tickFormat(d => d.toLocaleString())
       )
       .selectAll("text")
-      .style("font-size", "10px");
+      .style("font-size", "12px");
 
+    /* LINE */
     const line = d3.line()
       .curve(d3.curveMonotoneX)
       .x(d => x(d.YEAR))
@@ -130,12 +127,13 @@ d3.csv("data/mobile_phone_cleaned.csv").then(raw => {
 
     const len = path.node().getTotalLength();
     path.attr("stroke-dasharray", `${len} ${len}`)
-        .attr("stroke-dashoffset", len)
-        .transition()
-        .duration(700)
-        .ease(d3.easeCubic)
-        .attr("stroke-dashoffset", 0);
+      .attr("stroke-dashoffset", len)
+      .transition()
+      .duration(800)
+      .ease(d3.easeCubic)
+      .attr("stroke-dashoffset", 0);
 
+    /* DOTS + TOOLTIP */
     svg.selectAll(".dot")
       .data(stateData)
       .enter()
@@ -143,33 +141,32 @@ d3.csv("data/mobile_phone_cleaned.csv").then(raw => {
       .attr("class", "dot")
       .attr("cx", d => x(d.YEAR))
       .attr("cy", d => y(d.TOTAL_FINES))
-      .attr("r", 3)
+      .attr("r", 3.5)
       .attr("fill", color(state))
       .on("mouseover", (event, d) => {
         const prev = stateData.find(p => p.YEAR === d.YEAR - 1);
-        const pct = prev
-          ? (((d.TOTAL_FINES - prev.TOTAL_FINES) / prev.TOTAL_FINES) * 100).toFixed(1)
-          : "—";
+        const pct = prev ? (((d.TOTAL_FINES - prev.TOTAL_FINES) / prev.TOTAL_FINES) * 100).toFixed(1) : "—";
 
         q1SmallTooltip
           .style("opacity", 1)
           .html(`
             <strong>${state}</strong><br/>
             Year: ${d.YEAR}<br/>
-            Fines: ${d.TOTAL_FINES.toLocaleString()}<br/>
-            Change: ${pct === "—" ? "—" : (pct > 0 ? "+" : "") + pct + "%"}
+            Fines: <strong>${d.TOTAL_FINES.toLocaleString()}</strong><br/>
+            Change: <strong>${pct === "—" ? "—" : (pct > 0 ? "+" : "") + pct + "%"}</strong>
           `)
           .style("left", (event.pageX + 12) + "px")
           .style("top", (event.pageY - 28) + "px");
       })
       .on("mouseout", () => q1SmallTooltip.style("opacity", 0));
 
+    /* STATE LABEL */
     svg.append("text")
       .attr("x", margin.left)
-      .attr("y", margin.top - 10)
+      .attr("y", margin.top - 12)
       .attr("fill", "#003366")
-      .attr("font-size", 12)
-      .attr("font-weight", "600")
+      .attr("font-size", "14px")
+      .attr("font-weight", "700")
       .text(state);
   });
 });

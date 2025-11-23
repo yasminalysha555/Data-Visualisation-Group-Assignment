@@ -571,17 +571,6 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width:20px; 
   cursor: pointer;
 }
 
-/* Small multiples grid override */
-#q1-small {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-}
-
-#q1-small svg {
-  height: 160px;
-}
-
 /* Responsive */
 @media (max-width: 900px) {
   #q1-small {
@@ -765,14 +754,6 @@ body.transition-out {
 /* Tooltip above everything */
 #tooltip {
   z-index: 9999 !important;
-}
-
-/* Q1 SMALL MULTIPLES — Panel Card Background */
-.small-multiples-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-top: 20px;
 }
 
 /* Each panel wrapper */
