@@ -35,12 +35,10 @@ d3.csv("data/mobile_phone_cleaned.csv").then(raw => {
 
   const states = [...new Set(aggregated.map(d => d.JURISDICTION))];
 
-  /* 🔥 IMPROVED SIZE FOR VISIBILITY */
   const width = 320;
   const height = 220;
 
-  /* 🔥 MORE SPACE FOR LABELS */
-  const margin = { top: 35, right: 18, bottom: 45, left: 60 };
+  const margin = { top: 25, right: 35, bottom: 40, left: 55 };
 
   const container = d3.select("#q1-small");
 
