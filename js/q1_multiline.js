@@ -1,3 +1,5 @@
+/* Q1 MULTILINE */
+
 const q1Margin = { top: 40, right: 120, bottom: 40, left: 70 },
       q1Width  = 1000 - q1Margin.left - q1Margin.right,
       q1Height = 420 - q1Margin.top - q1Margin.bottom;
@@ -16,27 +18,25 @@ let q1Metric = "TOTAL_FINES";
 let q1View = "all";
 let q1Single = null;
 
-// ⭐ ADDED — track which states are visible
+// Track legend visibility
 let legendVisible = {};
 
-
-// ---------------- LOAD CSV ----------------
 d3.csv("data/mobile_phone_cleaned.csv").then(raw => {
+
   raw.forEach(d => {
     d.YEAR = +d.YEAR;
     d.TOTAL_FINES = +d.TOTAL_FINES || 0;
     d.LICENCE_TOTAL = +d.LICENCE_TOTAL || 0;
   });
 
-  // Aggregate correctly (do NOT touch this)
+  // Aggregate (unchanged)
   const aggregated = Array.from(
     d3.rollup(
       raw,
       v => {
         const totalFines = d3.sum(v, d => d.TOTAL_FINES);
-        const totalLic = d3.sum(v, d => d.LICENCE_TOTAL);
-        const per10k = totalLic ? (totalFines / totalLic) * 10000 : 0;
-
+        const totalLic   = d3.sum(v, d => d.LICENCE_TOTAL);
+        const per10k     = totalLic ? (totalFines / totalLic) * 10000 : 0;
         return {
           TOTAL_FINES: totalFines,
           FINES_PER_10K_LICENCES: per10k
@@ -45,9 +45,9 @@ d3.csv("data/mobile_phone_cleaned.csv").then(raw => {
       d => d.JURISDICTION,
       d => d.YEAR
     ),
-    ([jur, yearMap]) =>
+    ([state, yearMap]) =>
       Array.from(yearMap, ([year, vals]) => ({
-        JURISDICTION: jur,
+        JURISDICTION: state,
         YEAR: +year,
         TOTAL_FINES: vals.TOTAL_FINES,
         FINES_PER_10K_LICENCES: vals.FINES_PER_10K_LICENCES
@@ -57,17 +57,17 @@ d3.csv("data/mobile_phone_cleaned.csv").then(raw => {
   q1Data = aggregated;
   states = [...new Set(q1Data.map(d => d.JURISDICTION))];
 
-  // ⭐ ADDED — init legend visibility
+  // Init legend visibility
   states.forEach(s => legendVisible[s] = true);
 
   setupUI();
   setupChart();
-  createLegend();   // ⭐ ADDED
+  createLegend();
   drawChart();
 });
 
 
-// ---------------- UI ----------------
+/* ---------------- UI SETUP ---------------- */
 function setupUI() {
 
   document.querySelectorAll('input[name="metricQ1"]').forEach(r => {
@@ -101,7 +101,8 @@ function setupUI() {
 }
 
 
-// ---------------- CHART SETUP ----------------
+
+/* ---------------- INITIAL CHART SETUP ---------------- */
 function setupChart() {
   x = d3.scaleLinear()
     .domain(d3.extent(q1Data, d => d.YEAR))
@@ -130,63 +131,54 @@ function setupChart() {
 
 
 
-
+/* ---------------- LEGEND ---------------- */
 function createLegend() {
-
   const legend = q1Svg.append("g")
     .attr("class", "q1-legend")
-    .attr("transform", `translate(${q1Width + 20}, 0)`);
+    .attr("transform", `translate(${q1Width + 20},0)`);
 
   const item = legend.selectAll(".legend-item")
     .data(states)
     .enter()
     .append("g")
     .attr("class", "legend-item")
-    .attr("transform", (d, i) => `translate(0, ${i * 26})`)
-    .style("cursor", "pointer")
-    .on("click", (e, state) => {
+    .attr("transform", (d,i)=>`translate(0,${i*26})`)
+    .style("cursor","pointer")
+    .on("click",(e,state)=>{
       legendVisible[state] = !legendVisible[state];
 
-      // Update square opacity immediately
       legend.selectAll(".legend-square")
-        .filter(d => d === state)
-        .transition().duration(200)
+        .filter(d=>d===state)
         .attr("opacity", legendVisible[state] ? 1 : 0.25);
 
-      // Update label appearance
       legend.selectAll(".legend-label")
-        .filter(d => d === state)
-        .transition().duration(200)
+        .filter(d=>d===state)
         .attr("fill-opacity", legendVisible[state] ? 1 : 0.4);
 
       drawChart();
     });
 
-
-  // COLOR BOX
   item.append("rect")
-    .attr("class", "legend-square")
-    .attr("width", 16)
-    .attr("height", 16)
-    .attr("rx", 3)
-    .attr("fill", d => color(d))
-    .attr("opacity", 1);
+    .attr("class","legend-square")
+    .attr("width",16)
+    .attr("height",16)
+    .attr("fill",d=>color(d))
+    .attr("rx",3);
 
-  // LABEL
   item.append("text")
-    .attr("class", "legend-label")
-    .attr("x", 24)
-    .attr("y", 12)
-    .attr("font-size", "13px")
-    .attr("font-weight", 600)
-    .attr("fill", "#0A2342")
-    .text(d => d);
+    .attr("class","legend-label")
+    .attr("x",24)
+    .attr("y",12)
+    .attr("font-size","13px")
+    .attr("font-weight",600)
+    .text(d=>d);
 }
 
 
 
-// ---------------- DRAW ----------------
+/* ---------------- DRAW CHART ---------------- */
 function drawChart() {
+
   let filtered = q1Data;
 
   if (q1View === "single" && q1Single) {
@@ -194,29 +186,24 @@ function drawChart() {
   }
 
   if (q1View === "top3") {
-    const totals = d3.rollup(filtered, v => d3.sum(v, d => d[q1Metric]), d => d.JURISDICTION);
+    const totals = d3.rollup(filtered, v=>d3.sum(v,d=>d[q1Metric]), d=>d.JURISDICTION);
     const top3 = Array.from(totals.entries())
       .sort((a,b)=>b[1]-a[1])
       .slice(0,3)
       .map(d=>d[0]);
-
     filtered = filtered.filter(d => top3.includes(d.JURISDICTION));
   }
 
   if (q1View === "bottom3") {
-    const totals = d3.rollup(filtered, v => d3.sum(v, d => d[q1Metric]), d => d.JURISDICTION);
+    const totals = d3.rollup(filtered, v=>d3.sum(v,d=>d[q1Metric]), d=>d.JURISDICTION);
     const bot3 = Array.from(totals.entries())
       .sort((a,b)=>a[1]-b[1])
       .slice(0,3)
       .map(d=>d[0]);
-
     filtered = filtered.filter(d => bot3.includes(d.JURISDICTION));
   }
 
-  y.domain([
-    0,
-    d3.max(filtered, d => d[q1Metric])
-  ]).nice();
+  y.domain([0, d3.max(filtered, d => d[q1Metric])]).nice();
 
   q1Svg.select(".y-axis")
     .transition().duration(500)
@@ -234,25 +221,25 @@ function drawChart() {
 
   const paths = q1Svg.selectAll(".line-series")
     .data(
-      Array.from(nested).filter(([state]) => legendVisible[state]),  // ⭐ FILTER BY LEGEND
-      d => d[0]
+      Array.from(nested).filter(([state]) => legendVisible[state]),
+      d=>d[0]
     );
 
   paths.enter()
     .append("path")
-    .attr("class", "line-series")
-    .attr("fill", "none")
-    .attr("stroke-width", 2)
-    .attr("stroke", d => color(d[0]))
-    .attr("d", d => line(d[1].sort((a,b)=>a.YEAR-b.YEAR)))
-    .attr("stroke-dasharray", function() { return this.getTotalLength(); })
-    .attr("stroke-dashoffset", function() { return this.getTotalLength(); })
+    .attr("class","line-series")
+    .attr("fill","none")
+    .attr("stroke-width",2)
+    .attr("stroke",d=>color(d[0]))
+    .attr("d",d=>line(d[1].sort((a,b)=>a.YEAR-b.YEAR)))
+    .attr("stroke-dasharray", function(){return this.getTotalLength();})
+    .attr("stroke-dashoffset", function(){return this.getTotalLength();})
     .transition().duration(1500)
-    .attr("stroke-dashoffset", 0);
+    .attr("stroke-dashoffset",0);
 
   paths.transition().duration(700)
-    .attr("stroke", d => color(d[0]))
-    .attr("d", d => line(d[1].sort((a,b)=>a.YEAR-b.YEAR)));
+    .attr("stroke",d=>color(d[0]))
+    .attr("d",d=>line(d[1].sort((a,b)=>a.YEAR-b.YEAR)));
 
   paths.exit().remove();
 
@@ -261,7 +248,7 @@ function drawChart() {
 
 
 
-// ---------------- HOVER ----------------
+/* ---------------- HOVER / TOOLTIP ---------------- */
 function addHover(nested) {
   const hoverLine = q1Svg.select(".hover-line");
 
@@ -273,20 +260,50 @@ function addHover(nested) {
     hoverLine.attr("x1", mx).attr("x2", mx).style("opacity", 1);
 
     const rows = Array.from(nested)
-      .filter(([state]) => legendVisible[state])   // ⭐ FIX TOOLTIP TOO
+      .filter(([state]) => legendVisible[state])
       .map(([state, arr]) => {
-        const r = arr.find(v => v.YEAR === year);
-        return r ? { state, value: r[q1Metric] } : null;
+        const r = arr.find(v=>v.YEAR===year);
+        return r ? {state, value:r[q1Metric]} : null;
       })
       .filter(Boolean)
       .sort((a,b)=>b.value-a.value);
 
-    q1Tooltip.style("opacity",1)
+    /* ===========================================
+        ANNOTATION TEXT FOR 2020/2021
+    ============================================ */
+
+    let annotation = "";
+
+    if (year === 2020) {
+      annotation = `
+        <br><br>
+        <strong style="color:#b30059;">
+          Camera enforcement introduced in 2020
+        </strong>
+        <br>
+        <strong style="color:#003366;">
+          COVID-19 impact period (2020–2021)
+        </strong>
+      `;
+    } else if (year === 2021) {
+      annotation = `
+        <br><br>
+        <strong style="color:#003366;">
+          COVID-19 impact period (2020–2021)
+        </strong>
+      `;
+    }
+
+    q1Tooltip.style("opacity", 1)
       .html(`
         <strong>${year}</strong><br>
         ${rows.map(i =>
-          `<span style="color:${color(i.state)}">${i.state}</span>: ${i.value.toLocaleString()}`
+          `<span style="color:${color(i.state)}">
+              ${i.state}
+            </span>: 
+            ${i.value.toLocaleString()}`
         ).join("<br>")}
+        ${annotation}
       `)
       .style("left",(e.pageX+15)+"px")
       .style("top",(e.pageY-20)+"px");
