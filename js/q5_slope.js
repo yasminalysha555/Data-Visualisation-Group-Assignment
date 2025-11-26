@@ -213,7 +213,7 @@
                 <strong>2008:</strong> ${d3.format(",")(d.start)} fines<br>
                 <strong>2024:</strong> ${d3.format(",")(d.end)} fines<br>
                 <strong>Change:</strong> <span style="color: ${d.change > 0 ? '#d73027' : '#1a9850'}; font-weight: 700;">${d.change > 0 ? '+' : ''}${d3.format(",")(d.change)}</span><br>
-                <strong>% Change:</strong> ${d3.format(".1f")}%
+                <strong>% Change:</strong> ${d3.format(".1f")(d.percentChange)}%
               `);
           })
           .on("mousemove", function(event) {
@@ -254,7 +254,8 @@
                 <strong>2008:</strong> ${d3.format(",")(d.start)} fines<br>
                 <strong>2024:</strong> ${d3.format(",")(d.end)} fines<br>
                 <strong>Change:</strong> <span style="color: ${d.change > 0 ? '#d73027' : '#1a9850'}; font-weight: 700;">${d.change > 0 ? '+' : ''}${d3.format(",")(d.change)}</span><br>
-                <strong>% Change:</strong> ${d3.format(".1f")}%
+                <strong>% Change:</strong> ${d3.format(".1f")(d.percentChange)}%
+
               `);
           })
           .on("mousemove", function(event) {
@@ -289,7 +290,8 @@
                 <strong>2008:</strong> ${d3.format(",")(d.start)} fines<br>
                 <strong>2024:</strong> ${d3.format(",")(d.end)} fines<br>
                 <strong>Change:</strong> <span style="color: ${d.change > 0 ? '#d73027' : '#1a9850'}; font-weight: 700;">${d.change > 0 ? '+' : ''}${d3.format(",")(d.change)}</span><br>
-                <strong>% Change:</strong> ${d3.format(".1f")}%
+                <strong>% Change:</strong> ${d3.format(".1f")(d.percentChange)}%
+
               `);
           })
           .on("mousemove", function(event) {
@@ -327,7 +329,8 @@
                 <strong>2008:</strong> ${d3.format(",")(d.start)} fines<br>
                 <strong>2024:</strong> ${d3.format(",")(d.end)} fines<br>
                 <strong>Change:</strong> <span style="color: ${d.change > 0 ? '#d73027' : '#1a9850'}; font-weight: 700;">${d.change > 0 ? '+' : ''}${d3.format(",")(d.change)}</span><br>
-                <strong>% Change:</strong> ${d3.format(".1f")}%
+                <strong>% Change:</strong> ${d3.format(".1f")(d.percentChange)}%
+
               `);
           })
           .on("mousemove", function(event) {
@@ -367,7 +370,8 @@
                 <strong>2008:</strong> ${d3.format(",")(d.start)} fines<br>
                 <strong>2024:</strong> ${d3.format(",")(d.end)} fines<br>
                 <strong>Change:</strong> <span style="color: ${d.change > 0 ? '#d73027' : '#1a9850'}; font-weight: 700;">${d.change > 0 ? '+' : ''}${d3.format(",")(d.change)}</span><br>
-                <strong>% Change:</strong> ${d3.format(".1f")}%
+                <strong>% Change:</strong> ${d3.format(".1f")(d.percentChange)}%
+
               `);
           })
           .on("mousemove", function(event) {
