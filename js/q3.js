@@ -80,6 +80,15 @@
       perYear.set(year, arr);
     });
 
+    // compute a fixed (global) color scale across all years so colors remain consistent
+    const allRatesFlat = Array.from(perYear.values()).flat().map(d => d.rate).filter(r => typeof r === 'number' && !isNaN(r));
+    let globalMinRate = d3.min(allRatesFlat);
+    let globalMaxRate = d3.max(allRatesFlat);
+    if(globalMinRate === globalMaxRate){ // avoid degenerate domain
+      globalMaxRate = globalMinRate + 1;
+    }
+    const colorScale = d3.scaleSequential(d3.interpolateOrRd).domain([globalMinRate, globalMaxRate]);
+
     // build initial UI controls (slider only)
     const slider = document.getElementById('yearSlider');
     const yearDisplay = document.getElementById('yearDisplay');
@@ -102,7 +111,7 @@
       const data = perYear.get(year).slice();
       data.sort((a,b) => b.rate - a.rate);
       const rates = data.map(d=>d.rate);
-      const color = d3.scaleSequential(d3.interpolateOrRd).domain([d3.min(rates), d3.max(rates)]);
+      const color = colorScale; // use global fixed color scale
 
       // update map colors — support GeoJSON features if loaded, otherwise fall back to simple rectangles
       const rateById = new Map(data.map(d=>[d.jurisdiction, d.rate]));
@@ -121,7 +130,17 @@
           'Australian Capital Territory': 'ACT'
         };
 
-        const getCode = f => (f.properties && (f.properties.iso_3166_2 || nameToCode[f.properties.name])) || null;
+        const getCode = f => {
+          if(!f || !f.properties) return null;
+          const iso = f.properties.iso_3166_2;
+          if(iso){
+            // iso might be 'AU-NSW' — take last part (NSW)
+            const parts = String(iso).split('-');
+            return parts[parts.length-1].toUpperCase();
+          }
+          if(nameToCode[f.properties.name]) return nameToCode[f.properties.name];
+          return null;
+        };
 
         const paths = mapLayer.selectAll('path.region').data(features, d => getCode(d) || d.id || d.properties && d.properties.name);
         paths.join(
@@ -133,7 +152,9 @@
             .on('mouseover', (event,d) => {
               const code = getCode(d);
               const label = d.properties && d.properties.name ? d.properties.name : code || 'Unknown';
-              showTooltip(event.pageX, event.pageY, `${label} (${code||''})<br/>Rate: ${d3.format('.2f')(rateById.get(code)||0)}`);
+              const rate = rateById.get(code);
+              const rateText = (typeof rate === 'number' && !isNaN(rate)) ? d3.format('.2f')(rate) : 'N/A';
+              showTooltip(event.pageX, event.pageY, `${label} (${code||''})<br/>Rate: ${rateText}`);
             })
             .on('mousemove', (event) => moveTooltip(event.pageX, event.pageY))
             .on('mouseout', hideTooltip)
@@ -141,6 +162,18 @@
           update => update.call(sel => sel.transition().duration(300).attr('d', d => window.__q3_path(d)).attr('fill', d => color(rateById.get(getCode(d))||0))),
           exit => exit.remove()
         );
+
+        // rebind tooltip events on all paths so handlers reference the latest rateById
+        mapLayer.selectAll('path.region')
+          .on('mouseover', (event,d) => {
+            const code = getCode(d);
+            const label = d.properties && d.properties.name ? d.properties.name : code || 'Unknown';
+            const rate = rateById.get(code);
+            const rateText = (typeof rate === 'number' && !isNaN(rate)) ? d3.format('.2f')(rate) : 'N/A';
+            showTooltip(event.pageX, event.pageY, `${label} (${code||''})<br/>Rate: ${rateText}`);
+          })
+          .on('mousemove', (event) => moveTooltip(event.pageX, event.pageY))
+          .on('mouseout', hideTooltip);
 
         // remove any old placeholder rectangles/labels
         // remove any old placeholder rectangles/labels from the map layer
@@ -158,13 +191,27 @@
             .attr('height', d=>d.h)
             .attr('stroke', '#333')
             .attr('stroke-width', 0.6)
-            .on('mouseover', (event,d) => showTooltip(event.pageX, event.pageY, `${d.name} (${d.id})<br/>Rate: ${d3.format('.2f')(rateById.get(d.id)||0)}`))
+            .on('mouseover', (event,d) => {
+              const rate = rateById.get(d.id);
+              const rateText = (typeof rate === 'number' && !isNaN(rate)) ? d3.format('.2f')(rate) : 'N/A';
+              showTooltip(event.pageX, event.pageY, `${d.name} (${d.id})<br/>Rate: ${rateText}`);
+            })
             .on('mousemove', (event) => moveTooltip(event.pageX, event.pageY))
             .on('mouseout', hideTooltip)
             .call(sel => sel.transition().duration(300).attr('fill', d => color(rateById.get(d.id)||0))),
           update => update.call(sel => sel.transition().duration(300).attr('fill', d => color(rateById.get(d.id)||0))),
           exit => exit.remove()
         );
+
+        // rebind tooltip events for fallback rects as well (so they reflect updated rates)
+        mapLayer.selectAll('rect.region')
+          .on('mouseover', (event,d) => {
+            const rate = rateById.get(d.id);
+            const rateText = (typeof rate === 'number' && !isNaN(rate)) ? d3.format('.2f')(rate) : 'N/A';
+            showTooltip(event.pageX, event.pageY, `${d.name} (${d.id})<br/>Rate: ${rateText}`);
+          })
+          .on('mousemove', (event) => moveTooltip(event.pageX, event.pageY))
+          .on('mouseout', hideTooltip);
 
         // labels
         const labs = mapLayer.selectAll('text.label').data(shapes, d=>d.id);
@@ -181,11 +228,11 @@
       const legendSvg = d3.select('#map-legend').append('svg').attr('width', legendWidth).attr('height', 50);
       const defs = legendSvg.append('defs');
       const linearGrad = defs.append('linearGradient').attr('id','grad-'+year).attr('x1','0%').attr('x2','100%');
-      linearGrad.append('stop').attr('offset','0%').attr('stop-color', color(d3.min(rates)));
-      linearGrad.append('stop').attr('offset','100%').attr('stop-color', color(d3.max(rates)));
+      linearGrad.append('stop').attr('offset','0%').attr('stop-color', color(globalMinRate));
+      linearGrad.append('stop').attr('offset','100%').attr('stop-color', color(globalMaxRate));
       legendSvg.append('rect').attr('x',0).attr('y',6).attr('width',legendWidth).attr('height',12).style('fill',`url(#grad-${year})`).style('stroke','#ccc');
-      legendSvg.append('text').attr('x',0).attr('y',26).text(d3.format('.2f')(d3.min(rates))).attr('font-size',12).attr('fill','#333');
-      legendSvg.append('text').attr('x',legendWidth).attr('y',26).text(d3.format('.2f')(d3.max(rates))).attr('font-size',12).attr('fill','#333').attr('text-anchor','end');
+      legendSvg.append('text').attr('x',0).attr('y',26).text(d3.format('.2f')(globalMinRate)).attr('font-size',12).attr('fill','#333');
+      legendSvg.append('text').attr('x',legendWidth).attr('y',26).text(d3.format('.2f')(globalMaxRate)).attr('font-size',12).attr('fill','#333').attr('text-anchor','end');
 
       // Bar chart
       const bwidth = Math.min(760, window.innerWidth - 60);
@@ -203,7 +250,11 @@
         .attr('height', by.bandwidth())
         .attr('width', 0)
         .attr('fill', d=>color(d.rate))
-        .on('mouseover', (event,d) => showTooltip(event.pageX, event.pageY, `${d.jurisdiction}<br/>Rate: ${d3.format('.2f')(d.rate)}`))
+        .on('mouseover', (event,d) => {
+          const rate = d.rate;
+          const rateText = (typeof rate === 'number' && !isNaN(rate)) ? d3.format('.2f')(rate) : 'N/A';
+          showTooltip(event.pageX, event.pageY, `${d.jurisdiction}<br/>Rate: ${rateText}`);
+        })
         .on('mousemove', (event) => moveTooltip(event.pageX, event.pageY))
         .on('mouseout', hideTooltip)
         .transition().duration(500).attr('width', d=>bx(d.rate));

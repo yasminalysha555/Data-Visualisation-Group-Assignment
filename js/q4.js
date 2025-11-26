@@ -40,37 +40,29 @@
   }
 
   function buildCameraEditor(jurisdictions){
-    // Render jurisdictions horizontally: labels on the first row, inputs on the second
+    // Build a compact editor: single jurisdiction select and a single year select for camera intro
     const container = d3.select('#camera-editor');
     container.html('');
-    const grid = container.append('div').attr('class','camera-grid');
+    const row = container.append('div').attr('class','camera-grid single');
 
-    // label row
-    const labels = grid.append('div').attr('class','camera-row labels');
-    // input row
-    const inputs = grid.append('div').attr('class','camera-row inputs');
+    // no jurisdiction select in the editor – top selector determines jurisdiction
 
-    jurisdictions.forEach(j => {
-      labels.append('div').attr('class','camera-cell').text(j);
-      const cell = inputs.append('div').attr('class','camera-cell');
-      const select = cell.append('select').attr('data-jur', j);
-      // years from 2008 to 2024
-      for (let yr = 2008; yr <= 2024; yr++){
-        select.append('option')
-          .attr('value', yr)
-          .property('selected', (cameraIntro[j] || 2017) === yr)
-          .text(yr);
-      }
-    });
+    row.append('label').attr('for','q4-editor-year').text('Camera intro year: ');
+    const yrSel = row.append('select').attr('id','q4-editor-year');
+    for (let yr = 2008; yr <= 2024; yr++) yrSel.append('option').attr('value', yr).text(yr);
+    // set initial year based on the top jurisdiction selection (if any)
+    const currentTopJur = d3.select('#q4-jur-select').empty() ? 'ALL' : d3.select('#q4-jur-select').property('value');
+    if(currentTopJur && currentTopJur !== 'ALL') yrSel.property('value', cameraIntro[currentTopJur] || 2017);
+
+    // when the editor jurisdiction selector existed we synced it with the top selector; now that the editor jur dropdown was removed
+    // we do not need jurisdiction change handling in the editor. The top dropdown controls which jurisdiction is shown.
   }
 
   function updateCameraFromEditor(){
-    d3.selectAll('#camera-editor select').each(function(){
-      const sel = d3.select(this);
-      const j = sel.attr('data-jur');
-      const v = +sel.node().value;
-      if (!isNaN(v)) cameraIntro[j] = v;
-    });
+    // read the current selected jurisdiction from the top dropdown and the year from the editor and update mapping
+    const jur = d3.select('#q4-jur-select').property('value');
+    const yr = +d3.select('#q4-editor-year').property('value');
+    if (jur && jur !== 'ALL' && !isNaN(yr)) cameraIntro[jur] = yr;
   }
 
   d3.csv(CSV_PATH, parseRow).then(raw => {
@@ -102,34 +94,45 @@
     xAxisG.call(d3.axisBottom(x).tickFormat(d3.format('d')).ticks(years.length));
     yAxisG.call(d3.axisLeft(y));
 
-    // legend / toggles
-    const legend = d3.select('#q4-legend');
-    legend.html('');
-    const legendList = legend.append('div').attr('class','legend-list');
-
+    // create a top jurisdiction dropdown in the controls area (makes it easier to find)
+    const controlsLeft = d3.select('.q4-toolbar-left');
+    // create a small container at top for jurisdiction selection
+    const topJur = controlsLeft.append('div').attr('class','jur-selector');
+    topJur.append('label').attr('for','q4-jur-select').text('Select jurisdiction: ');
+    const jurSelect = topJur.append('select').attr('id','q4-jur-select');
     color.domain(jurisdictions);
-
-    // default visible subset
-    const defaultVisible = new Set(['NSW','QLD','VIC','TAS']);
-
-    jurisdictions.forEach((j) => {
-      const entry = legendList.append('div').attr('class','legend-entry');
-      entry.append('input').attr('type','checkbox').property('checked', defaultVisible.has(j)).attr('data-j', j);
-      entry.append('span').style('display','inline-block').style('width','12px').style('height','12px').style('background',color(j)).style('margin','0 6px');
-      entry.append('span').text(j);
-    });
+    // add 'All' option first so user can see the full chart by default
+    jurSelect.append('option').attr('value', 'ALL').text('All');
+    jurisdictions.forEach(j => jurSelect.append('option').attr('value', j).text(j));
+    // default selection: show all lines
+    jurSelect.property('value', 'ALL');
+    // disable the camera intro year picker when showing all jurisdictions
+    d3.select('#q4-editor-year').property('disabled', true);
+    // (no swatch) — color swatch removed; the dropdown is sufficient for selection
+    // add the info box inside the controls area so it's visible at the top
+    const infoBox = topJur.append('div').attr('class', 'q4-info');
+    function updateInfoBox(){
+      const v = jurSelect.property('value');
+      if(v === 'ALL'){
+        infoBox.html(`<strong>Selected:</strong> ALL &nbsp; <strong>Camera intro:</strong> —`);
+      } else {
+        const intro = (cameraIntro[v] || 'N/A');
+        infoBox.html(`<strong>Selected:</strong> ${v} &nbsp; <strong>Camera intro:</strong> ${intro}`);
+      }
+    }
+    updateInfoBox();
 
     // single tooltip for entire chart
     const tooltip = d3.select('body').append('div').attr('class','chart-tooltip').style('display','none');
 
     function render(){
       inner.selectAll('.jur-group').remove();
+      // get the currently selected jurisdiction from the legend dropdown
+      const selJur = d3.select('#q4-jur-select').property('value');
+      // show all jurisdictions by default (value 'ALL'), otherwise show only the selected one
+      const targetJurs = (selJur === 'ALL') ? jurisdictions.slice() : [selJur];
 
-      const visible = new Set();
-      d3.selectAll('#q4-legend input[type=checkbox]').each(function(){ if (this.checked) visible.add(this.getAttribute('data-j')); });
-
-      jurisdictions.forEach(j => {
-        if (!visible.has(j)) return;
+      targetJurs.forEach(j => {
         const arr = (dataByJur.get(j) || []).slice().sort((a,b)=>a.YEAR-b.YEAR);
         if (!arr.length) return;
 
@@ -152,26 +155,35 @@
           .x(d => x(d.YEAR))
           .y(d => y(d.TOTAL_FINES));
 
+        const isSelected = (selJur === 'ALL') ? false : true;
+        // if showing all, use smaller strokes so the chart is readable; if showing only selected, emphasize
+        const strokeOpacity = (selJur === 'ALL') ? 0.9 : 1;
+        const strokeWidth = (selJur === 'ALL') ? 1.5 : 4;
+        const circleRadius = (selJur === 'ALL') ? 2.5 : 4.5;
+
+        const strokeColor = color(j);
         g.append('path')
           .datum(before)
           .attr('fill','none')
-          .attr('stroke', color(j))
-          .attr('stroke-width', 2)
+          .attr('stroke', strokeColor)
+          .attr('stroke-width', strokeWidth)
+          .attr('opacity', strokeOpacity)
           .attr('stroke-dasharray','6 4')
           .attr('d', lineGen);
 
         g.append('path')
           .datum(after)
           .attr('fill','none')
-          .attr('stroke', color(j))
-          .attr('stroke-width', 2)
+          .attr('stroke', strokeColor)
+          .attr('stroke-width', strokeWidth)
+          .attr('opacity', strokeOpacity)
           .attr('d', lineGen);
 
         g.selectAll('.pt')
           .data(arr.filter(d => d.TOTAL_FINES != null))
           .enter().append('circle')
           .attr('class','pt')
-          .attr('r',3)
+          .attr('r',circleRadius)
           .attr('cx', d => x(d.YEAR))
           .attr('cy', d => y(d.TOTAL_FINES))
           .attr('fill', color(j))
@@ -181,12 +193,28 @@
           .on('mousemove', (event) => tooltip.style('left', (event.pageX+10)+'px').style('top',(event.pageY-10)+'px'))
           .on('mouseout', () => tooltip.style('display','none'));
       });
+
+          // update the info box next to the selector, rather than append below
+            updateInfoBox();
     }
 
     render();
 
-    d3.selectAll('#q4-legend input[type=checkbox]').on('change', () => render());
-    d3.select('#update-camera').on('click', () => { updateCameraFromEditor(); render(); });
+    d3.select('#q4-jur-select').on('change', () => {
+      const v = d3.select('#q4-jur-select').property('value');
+      // set the editor year to match the selected jurisdiction's cameraIntro if one is chosen
+      if(v === 'ALL'){
+        d3.select('#q4-editor-year').property('disabled', true);
+      } else {
+        d3.select('#q4-editor-year').property('disabled', false).property('value', cameraIntro[v] || 2017);
+      }
+      console.log('[q4] legend select changed ->', v);
+      updateInfoBox();
+      render();
+    });
+    // make updates automatic: when the camera intro year changes, update cameraIntro for the selected jurisdiction and re-render
+    d3.select('#q4-editor-year').on('change', () => { updateCameraFromEditor(); console.log('[q4] editor year changed ->', d3.select('#q4-editor-year').property('value'), 'for', d3.select('#q4-jur-select').property('value')); updateInfoBox(); render(); });
+    // no duplicate editor jurisdiction bindings — editor only edits camera year now.
 
   }).catch(err => {
     console.error('Failed to load CSV for Q4:', err);

@@ -475,6 +475,8 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width:20px; 
   stroke-linecap: round;
 }
 #q4-legend { margin-top: 12px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+#q4-legend .legend-row { display:flex; gap:12px; align-items:center; }
+#q4-legend .q4-info { font-size:0.95rem; color:#003366; margin-left: 8px; padding:6px 8px; background: rgba(255,255,255,0.92); border-radius:6px; box-shadow: 0 6px 10px rgba(0,60,110,0.04); }
 
 /* Horizontal legend entries for Q4 */
 #q4-legend .legend-list { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
@@ -535,6 +537,10 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width:20px; 
 .camera-cell { min-width:72px; display:flex; flex-direction:column; align-items:flex-start; }
 .camera-cell input, .camera-cell select { width:72px; padding:6px 8px; border-radius:6px; border:1px solid rgba(0,0,0,0.08); background:white; }
 .camera-cell select { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
+
+/* Top jurisdiction selector styling (Q4) */
+.jur-selector { display:flex; gap:8px; align-items:center; margin:8px 0; }
+.jur-selector select { min-width:140px; padding:6px 8px; border-radius:6px; border:1px solid rgba(0,0,0,0.08); }
 
 @media (max-width:640px) {
   .camera-cell { min-width:56px; }
