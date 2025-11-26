@@ -812,3 +812,87 @@ body.transition-out {
   transform: translateY(-3px);
   box-shadow: 0 8px 28px rgba(0, 120, 200, 0.35);
 }
+
+
+/* ========================================
+      Q5 — SLOPE GRAPH ENHANCEMENTS
+   ======================================== */
+
+/* Allow slope graph to expand fully */
+.q5-slope-enabled #q5-slope {
+  width: 100%;
+  overflow: visible;
+  padding: 20px 0 50px 0;
+  min-height: 900px;
+}
+
+/* Ensure the slope SVG can grow naturally */
+.q5-slope-enabled #q5-slope svg {
+  width: 100%;
+  height: auto !important;   /* <-- IMPORTANT */
+  display: block;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+/* Grid lines */
+.q5-slope-enabled #q5-slope .grid line {
+  shape-rendering: crispEdges;
+  stroke: #e5e5e5;
+  stroke-width: 1px;
+  opacity: 0.5;
+}
+
+/* Slope lines */
+.q5-slope-enabled .slope-line {
+  transition: stroke-width 0.25s ease, opacity 0.25s ease;
+  cursor: pointer;
+}
+
+.q5-slope-enabled .slope-line:hover {
+  stroke-width: 4.5px !important;
+  opacity: 1 !important;
+}
+
+/* Circles */
+.q5-slope-enabled #q5-slope circle {
+  transition: r 0.25s ease, opacity 0.25s ease;
+  cursor: pointer;
+}
+
+.q5-slope-enabled #q5-slope circle:hover {
+  r: 7 !important;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.30));
+}
+
+/* Labels */
+.q5-slope-enabled #q5-slope text {
+  transition: font-size 0.2s ease, font-weight 0.2s ease, fill 0.2s ease;
+}
+
+/* Selected line glow */
+.q5-slope-enabled #q5-slope .slope-line[opacity="1"] {
+  filter: drop-shadow(0 0 4px rgba(0, 122, 204, 0.35));
+}
+
+/* Tooltip */
+#q5-tooltip {
+  position: absolute;
+  padding: 14px 18px;
+  background: white;
+  border-radius: 10px;
+  border: 2px solid #b3e5fc;
+  color: #003366;
+  line-height: 1.6;
+  font-size: 14px;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 9999;
+  box-shadow: 0 6px 20px rgba(0,51,102,0.18);
+  transition: opacity 0.2s ease;
+}
+
+#q5-tooltip strong {
+  font-weight: 700;
+  color: #003366;
+}

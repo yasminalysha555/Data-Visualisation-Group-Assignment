@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="css/style.css">
   <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
-<body class="svg-q5">
+<body class="svg-q5 q5-slope-enabled">
   <!-- NAVBAR -->
   <div class="navbar">
     <div class="menu-icon">
@@ -48,6 +48,15 @@
 
       <div id="q5-legend"></div>
 
+  <!-- ===================================== -->
+  <!-- VISUALISATION 2: SLOPE GRAPH          -->
+  <!-- ===================================== -->
+  <section class="chart-section">
+    <h2 class="chart-header">2008 → 2024 Change (Slope Graph)</h2>
+
+    <div id="q5-slope"></div>
+  </section>
+
       <!-- PAGE NAVIGATION BUTTONS -->
       <div class="page-nav">
         <a href="q4.html" class="nav-btn prev-btn">← Previous Page</a>
@@ -58,5 +67,6 @@
 
   <script src="js/script.js"></script>
   <script src="js/q5.js"></script>
+  <script src="js/q5_slope.js"></script>
 </body>
 </html>
