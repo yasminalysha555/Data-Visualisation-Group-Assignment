@@ -36,11 +36,9 @@ d3.csv("data/mobile_phone_cleaned.csv").then(raw => {
   const states = [...new Set(aggregated.map(d => d.JURISDICTION))];
 
   const width = 320;
-  const height = 220;
+  const height = 240;
 
-  const margin = { top: 25, right: 35, bottom: 40, left: 55 };
-
-  const container = d3.select("#q1-small");
+  const margin = { top: 25, right: 35, bottom: 70, left: 70 };  const container = d3.select("#q1-small");
 
   /* COLOR SCALE (unchanged) */
   const color = d3.scaleOrdinal()
@@ -66,7 +64,6 @@ d3.csv("data/mobile_phone_cleaned.csv").then(raw => {
       .nice()
       .range([height - margin.bottom, margin.top]);
 
-    /* 🔥 SVG FIX: override CSS and force custom width/height */
     const svg = container.append("svg")
       .attr("width", width)
       .attr("height", height)
@@ -109,6 +106,27 @@ d3.csv("data/mobile_phone_cleaned.csv").then(raw => {
       )
       .selectAll("text")
       .style("font-size", "12px");
+
+    /* Y-AXIS LABEL */
+    svg.append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 10)
+      .attr("x", -(height - margin.bottom - margin.top) / 2 - margin.top)
+      .attr("text-anchor", "middle")
+      .attr("font-size", "11px")
+      .attr("font-weight", "600")
+      .attr("fill", "#003366")
+      .text("Total Fines");
+
+    /* X-AXIS LABEL */
+    svg.append("text")
+      .attr("x", (width - margin.left - margin.right) / 2 + margin.left)
+      .attr("y", height - margin.bottom + 35)
+      .attr("text-anchor", "middle")
+      .attr("font-size", "11px")
+      .attr("font-weight", "600")
+      .attr("fill", "#003366")
+      .text("Year");
 
     /* LINE */
     const line = d3.line()

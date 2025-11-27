@@ -1,7 +1,6 @@
 /* Q1 MULTILINE */
 
-const q1Margin = { top: 40, right: 120, bottom: 40, left: 70 },
-      q1Width  = 1000 - q1Margin.left - q1Margin.right,
+const q1Margin = { top: 40, right: 120, bottom: 60, left: 70 },      q1Width  = 1000 - q1Margin.left - q1Margin.right,
       q1Height = 420 - q1Margin.top - q1Margin.bottom;
 
 const q1Svg = d3.select("#q1-multiline")
@@ -118,9 +117,32 @@ function setupChart() {
     .attr("class", "x-axis")
     .attr("transform", `translate(0,${q1Height})`);
 
-  q1Svg.append("g").attr("class", "y-axis");
+    q1Svg.append("g").attr("class", "y-axis");
 
-  q1Svg.append("line")
+    // Add Y-axis label
+    q1Svg.append("text")
+      .attr("class", "y-axis-label")
+      .attr("transform", "rotate(-90)")
+      .attr("y", -50)
+      .attr("x", -(q1Height / 2))
+      .attr("text-anchor", "middle")
+      .attr("font-size", "14px")
+      .attr("font-weight", "600")
+      .attr("fill", "#003366")
+      .text("Total Fines");
+    
+    // Add X-axis label
+    q1Svg.append("text")
+      .attr("class", "x-axis-label")
+      .attr("x", q1Width / 2)
+      .attr("y", q1Height + 35)
+      .attr("text-anchor", "middle")
+      .attr("font-size", "14px")
+      .attr("font-weight", "600")
+      .attr("fill", "#003366")
+      .text("Year");
+    
+    q1Svg.append("line")
     .attr("class", "hover-line")
     .attr("stroke", "#003366")
     .attr("stroke-width", 1.2)

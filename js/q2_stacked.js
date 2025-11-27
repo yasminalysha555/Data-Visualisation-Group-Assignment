@@ -1,280 +1,432 @@
-const q2Tooltip = d3.select("#tooltip");
+/*ENHANCED STACKED AREA CHART**/
 
-const q2StackMargin = { top: 40, right: 170, bottom: 45, left: 65 },
-      q2StackWidth  = 1000 - q2StackMargin.left - q2StackMargin.right,
-      q2StackHeight = 420  - q2StackMargin.top  - q2StackMargin.bottom;
+const tooltip = d3.select("#tooltip");
 
-const q2StackSvg = d3.select("#q2-stacked")
-  .append("svg")
-  .attr("width",  q2StackWidth  + q2StackMargin.left + q2StackMargin.right)
-  .attr("height", q2StackHeight + q2StackMargin.top  + q2StackMargin.bottom)
-  .append("g")
-  .attr("transform", `translate(${q2StackMargin.left},${q2StackMargin.top})`);
+// Colour-blind friendly palette
+const COLORS = {
+  "Police issued": "#0072B2",   // blue
+  "Camera issued": "#D55E00"    // vermillion
+};
 
-const q2StackMethods = ["Police issued", "Camera issued"];
-const q2StackColor   = d3.scaleOrdinal()
-  .domain(q2StackMethods)
-  .range(["#0072B2", "#E69F00"]);
+const METHODS = ["Police issued", "Camera issued"];
 
-let q2StackRaw = [];
-let q2StackX, q2StackY;
+let rawData = [];
+let metric = "TOTAL_FINES";
+let viewMode = "absolute";
+let hiddenSeries = new Set();
 
-let q2StackMetric   = "TOTAL_FINES";  // TOTAL_FINES or FINES_PER_10K_LICENCES
-let q2StackViewMode = "absolute";     // absolute or percent
-let q2LegendFocus   = null;           // null = both, otherwise "Police issued" or "Camera issued"
+// Chart dimensions
+const margin = { top: 60, right: 120, bottom: 120, left: 100 };
+const width = 1100 - margin.left - margin.right;
+const height = 500 - margin.top - margin.bottom;
 
 // Load data
 d3.csv("data/mobile_phone_cleaned.csv").then(data => {
   data.forEach(d => {
-    d.YEAR                    = +d.YEAR;
-    d.TOTAL_FINES             = +d.TOTAL_FINES;
-    d.FINES_PER_10K_LICENCES  = +d.FINES_PER_10K_LICENCES || 0;
+    d.YEAR = +d.YEAR;
+    d.TOTAL_FINES = +d.TOTAL_FINES;
+    d.FINES_PER_10K_LICENCES = +d.FINES_PER_10K_LICENCES || 0;
   });
 
-  q2StackRaw = data;
-
-  setupStackedScales();
-  drawStackedChart();
-  setupStackedControls();
+  rawData = data;
+  
+  updateStats();
+  setupControls();
+  createLegend();
+  drawStackedArea();
 });
 
-/*SCALES + AXES*/
-
-function setupStackedScales() {
-  const years = d3.extent(q2StackRaw, d => d.YEAR);
-
-  q2StackX = d3.scaleLinear()
-    .domain(years)
-    .range([0, q2StackWidth]);
-
-  q2StackY = d3.scaleLinear()
-    .range([q2StackHeight, 0]);
-
-  // Axes groups
-  q2StackSvg.append("g")
-    .attr("class", "axis x-axis")
-    .attr("transform", `translate(0,${q2StackHeight})`);
-
-  q2StackSvg.append("g")
-    .attr("class", "axis y-axis");
-
-  // Hover guideline
-  q2StackSvg.append("line")
-    .attr("class", "hover-line")
-    .attr("y1", 0)
-    .attr("y2", q2StackHeight)
-    .attr("stroke", "#555")
-    .attr("stroke-width", 1.2)
-    .style("opacity", 0);
+// Update statistics cards
+function updateStats() {
+  const policeTotal = d3.sum(rawData.filter(d => d.DETECTION_METHOD === "Police issued"), d => d.TOTAL_FINES);
+  const cameraTotal = d3.sum(rawData.filter(d => d.DETECTION_METHOD === "Camera issued"), d => d.TOTAL_FINES);
+  
+  const yearlyTotals = d3.rollup(rawData, v => d3.sum(v, d => d.TOTAL_FINES), d => d.YEAR);
+  const peakYear = [...yearlyTotals].reduce((a, b) => a[1] > b[1] ? a : b);
+  
+  const recent2024 = rawData.filter(d => d.YEAR === 2024);
+  const camera2024 = d3.sum(recent2024.filter(d => d.DETECTION_METHOD === "Camera issued"), d => d.TOTAL_FINES);
+  const total2024 = d3.sum(recent2024, d => d.TOTAL_FINES);
+  const cameraShare = ((camera2024 / total2024) * 100).toFixed(1);
+  
+  document.getElementById("stat-police").textContent = policeTotal.toLocaleString();
+  document.getElementById("stat-police-change").textContent = "2008-2024";
+  
+  document.getElementById("stat-camera").textContent = cameraTotal.toLocaleString();
+  document.getElementById("stat-camera-change").textContent = "2020-2024";
+  
+  document.getElementById("stat-peak-year").textContent = peakYear[0];
+  document.getElementById("stat-peak-value").textContent = peakYear[1].toLocaleString() + " fines";
+  
+  document.getElementById("stat-camera-share").textContent = cameraShare + "%";
 }
 
-/*MAIN DRAW FUNCTION */
-
-function drawStackedChart() {
-  // Clear previous layers/overlays (but keep axes & hover line)
-  q2StackSvg.selectAll(".stack-layer").remove();
-  q2StackSvg.selectAll(".hover-overlay").remove();
-  q2StackSvg.selectAll(".q2-stack-legend").remove();
-
-  // Aggregate national totals by year & method
-  const years = [...new Set(q2StackRaw.map(d => d.YEAR))].sort((a,b) => a - b);
-
-  const yearly = years.map(year => {
-    const row = { YEAR: year };
-    q2StackMethods.forEach(m => {
-      const subset = q2StackRaw.filter(d => d.YEAR === year && d.DETECTION_METHOD === m);
-      row[m] = d3.sum(subset, d => d[q2StackMetric]);
+// Setup controls
+function setupControls() {
+  document.querySelectorAll('input[name="q2-metric"]').forEach(radio => {
+    radio.addEventListener("change", e => {
+      metric = e.target.value;
+      drawStackedArea();
     });
-    return row;
   });
 
-  
-  const activeMethods = q2LegendFocus ? [q2LegendFocus] : q2StackMethods;
+  document.querySelectorAll('input[name="q2-view"]').forEach(radio => {
+    radio.addEventListener("change", e => {
+      viewMode = e.target.value;
+      drawStackedArea();
+    });
+  });
+}
 
+// Create interactive legend
+function createLegend() {
+  const legendContainer = d3.select("#stacked-legend");
   
-  if (q2StackViewMode === "percent") {
-    q2StackY.domain([0, 100]).nice();
+  METHODS.forEach(method => {
+    const item = legendContainer.append("div")
+      .attr("class", "legend-item")
+      .style("color", COLORS[method])
+      .on("click", () => toggleSeries(method));
+    
+    item.append("div")
+      .attr("class", "legend-color")
+      .style("background", COLORS[method]);
+    
+    item.append("div")
+      .attr("class", "legend-label")
+      .text(method);
+  });
+}
+
+// Toggle series visibility
+function toggleSeries(method) {
+  if (hiddenSeries.has(method)) {
+    hiddenSeries.delete(method);
   } else {
-    const maxY = d3.max(yearly, yr =>
-      activeMethods.reduce((sum, m) => sum + (yr[m] || 0), 0)
-    ) || 1;
-    q2StackY.domain([0, maxY]).nice();
+    hiddenSeries.add(method);
   }
-
-  // Update axes
-  q2StackSvg.select(".x-axis")
-    .transition().duration(600)
-    .call(d3.axisBottom(q2StackX).tickFormat(d3.format("d")));
-
-  q2StackSvg.select(".y-axis")
-    .transition().duration(600)
-    .call(d3.axisLeft(q2StackY));
-
-  // Prepare stack data (absolute or percent)
-  const stackInput = yearly.map(yr => {
-    const total = d3.sum(q2StackMethods.map(m => yr[m] || 0));
-    const obj = { YEAR: yr.YEAR };
-    q2StackMethods.forEach(m => {
-      if (q2StackViewMode === "percent") {
-        obj[m] = total ? (yr[m] / total) * 100 : 0;
-      } else {
-        obj[m] = yr[m];
-      }
+  
+  d3.selectAll("#stacked-legend .legend-item")
+    .classed("inactive", function() {
+      const label = d3.select(this).select(".legend-label").text();
+      return hiddenSeries.has(label);
     });
-    return obj;
-  });
+  
+  drawStackedArea();
+}
 
-  const stack = d3.stack()
-    .keys(activeMethods)(stackInput);
-
-  const area = d3.area()
-    .curve(d3.curveMonotoneX)
-    .x(d => q2StackX(d.data.YEAR))
-    .y0(d => q2StackY(d[0]))
-    .y1(d => q2StackY(d[1]));
-
-  // Draw layers
-  const layers = q2StackSvg.selectAll(".stack-layer")
-    .data(stack, d => d.key);
-
-  layers.enter()
-    .append("path")
-    .attr("class", "stack-layer")
-    .attr("fill", d => q2StackColor(d.key))
-    .attr("opacity", 0.9)
-    .attr("d", area)
-    .style("filter", "drop-shadow(0 2px 6px rgba(0,0,0,0.12))")
-    .style("cursor", "pointer")
-    .attr("stroke", "#ffffff")
-    .attr("stroke-width", 0.5)
-    .merge(layers)
-    .transition()
-    .duration(700)
-    .attr("d", area);
-
-  layers.exit()
-    .transition().duration(400)
-    .attr("opacity", 0)
-    .remove();
-
-  // Hover overlay for guideline + tooltip
-  const hoverLine = q2StackSvg.select(".hover-line");
-
-  q2StackSvg.append("rect")
-    .attr("class", "hover-overlay")
-    .attr("fill", "transparent")
-    .attr("width", q2StackWidth)
-    .attr("height", q2StackHeight)
-    .on("mousemove", (event) => {
-      const [mx] = d3.pointer(event);
-      const year = Math.round(q2StackX.invert(mx));
-      const yrRow = yearly.find(r => r.YEAR === year);
-      if (!yrRow) return;
-
-      const total = d3.sum(q2StackMethods.map(m => yrRow[m] || 0));
-
-      hoverLine
-        .attr("x1", q2StackX(year))
-        .attr("x2", q2StackX(year))
-        .style("opacity", 1);
-
-      q2Tooltip
-        .style("opacity", 1)
-        .html(`
-          <div style="
-            background:#fff;
-            padding:10px 12px;
-            border-radius:10px;
-            border:1px solid #d0e2ff;
-            box-shadow:0 4px 14px rgba(0,0,0,0.12);
-            max-width:260px;
-          ">
-            <div style="font-weight:700;font-size:15px;color:#003366;margin-bottom:6px;">
-              ${year}
-            </div>
-
-            ${q2StackMethods.map(m => {
-              const v = yrRow[m] || 0;
-              const share = total ? (v / total * 100).toFixed(1) : 0;
-              return `
-                <div style="margin-bottom:6px;border-left:4px solid ${q2StackColor(m)};padding-left:6px;">
-                  <strong style="color:${q2StackColor(m)}">${m}</strong><br>
-                  ${q2StackMetric === "TOTAL_FINES"
-                    ? `Fines: ${v.toLocaleString()}`
-                    : `Rate: ${v.toFixed(1)} per 10k`}
-                  <br>
-                  Share: ${share}%
-                </div>
-              `;
-            }).join("")}
-          </div>
-        `)
-        .style("left", (event.pageX + 14) + "px")
-        .style("top",  (event.pageY - 20) + "px");
-    })
-    .on("mouseout", () => {
-      hoverLine.style("opacity", 0);
-      q2Tooltip.style("opacity", 0);
-    });
-
-  // Legend with focus behaviour
-  const legend = q2StackSvg.append("g")
-    .attr("class", "q2-stack-legend")
-    .attr("transform", `translate(${q2StackWidth + 20}, 0)`);
-
-  legend.selectAll(".legend-row")
-    .data(q2StackMethods)
-    .enter()
+// Main draw function
+function drawStackedArea() {
+  const container = d3.select("#q2-stacked");
+  container.selectAll("svg").remove();
+  
+  const svg = container.append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
     .append("g")
-    .attr("class", "legend-row")
-    .attr("transform", (d,i) => `translate(0, ${i * 26})`)
-    .style("cursor", "pointer")
-    .each(function(method) {
-      const row = d3.select(this);
+    .attr("transform", `translate(${margin.left},${margin.top})`);
 
-      row.append("rect")
-        .attr("width", 14)
-        .attr("height", 14)
-        .attr("rx", 3)
-        .attr("ry", 3)
-        .attr("fill", q2StackColor(method))
-        .attr("stroke", "#002b4c")
-        .attr("stroke-width", 0.6)
-        .style("opacity", q2LegendFocus && q2LegendFocus !== method ? 0.25 : 1);
+  // Aggregate by year
+  const yearlyData = d3.rollups(
+    rawData,
+    v => {
+      const obj = { year: v[0].YEAR };
+      METHODS.forEach(m => {
+        const filtered = v.filter(d => d.DETECTION_METHOD === m);
+        obj[m] = d3.sum(filtered, d => d[metric]);
+      });
+      obj.total = obj["Police issued"] + obj["Camera issued"];
+      return obj;
+    },
+    d => d.YEAR
+  ).map(d => d[1]).sort((a, b) => a.year - b.year);
 
-      row.append("text")
-        .attr("x", 20)
-        .attr("y", 11)
-        .text(method)
-        .attr("fill", "#003366")
-        .style("font-size", "13px");
-
-      row.on("click", () => {
-        // Toggle focus: if clicking current focus → reset to both; else focus that series
-        if (q2LegendFocus === method) {
-          q2LegendFocus = null;
-        } else {
-          q2LegendFocus = method;
-        }
-        drawStackedChart();
+  // Convert to percentage if needed
+  if (viewMode === "percent") {
+    yearlyData.forEach(d => {
+      const total = d.total;
+      METHODS.forEach(m => {
+        d[m] = total > 0 ? (d[m] / total) * 100 : 0;
       });
     });
-}
+  }
 
-/* CONTROLS  */
+  // Filter out hidden series
+  const visibleMethods = METHODS.filter(m => !hiddenSeries.has(m));
 
-function setupStackedControls() {
-  document.querySelectorAll('input[name="q2-metric"]').forEach(r => {
-    r.addEventListener("change", e => {
-      q2StackMetric = e.target.value;
-      drawStackedChart();
-    });
+  // Stack data
+  const stack = d3.stack()
+    .keys(visibleMethods)
+    .order(d3.stackOrderNone)
+    .offset(d3.stackOffsetNone);
+
+  const series = stack(yearlyData);
+
+  // Scales
+  const x = d3.scaleLinear()
+    .domain(d3.extent(yearlyData, d => d.year))
+    .range([0, width]);
+
+  const maxY = viewMode === "percent" 
+    ? 100 
+    : d3.max(series, s => d3.max(s, d => d[1]));
+
+  const y = d3.scaleLinear()
+    .domain([0, maxY])
+    .nice()
+    .range([height, 0]);
+
+  // Add grid
+  svg.append("g")
+    .attr("class", "grid")
+    .call(d3.axisLeft(y)
+      .tickSize(-width)
+      .tickFormat(""))
+    .style("opacity", 0.1);
+
+  // Area generator
+  const area = d3.area()
+    .x(d => x(d.data.year))
+    .y0(d => y(d[0]))
+    .y1(d => y(d[1]))
+    .curve(d3.curveMonotoneX);
+
+  // Draw areas with gradients
+  const defs = svg.append("defs");
+  
+  visibleMethods.forEach(method => {
+    const gradient = defs.append("linearGradient")
+      .attr("id", `gradient-${method.replace(/\s+/g, "-")}`)
+      .attr("x1", "0%")
+      .attr("y1", "0%")
+      .attr("x2", "0%")
+      .attr("y2", "100%");
+    
+    gradient.append("stop")
+      .attr("offset", "0%")
+      .attr("stop-color", COLORS[method])
+      .attr("stop-opacity", 0.8);
+    
+    gradient.append("stop")
+      .attr("offset", "100%")
+      .attr("stop-color", COLORS[method])
+      .attr("stop-opacity", 0.3);
   });
 
-  document.querySelectorAll('input[name="q2-view"]').forEach(r => {
-    r.addEventListener("change", e => {
-      q2StackViewMode = e.target.value;
-      drawStackedChart();
+  svg.selectAll(".area-path")
+    .data(series)
+    .enter()
+    .append("path")
+    .attr("class", "area")
+    .attr("d", area)
+    .style("fill", d => `url(#gradient-${d.key.replace(/\s+/g, "-")})`)
+    .style("stroke", d => COLORS[d.key])
+    .style("stroke-width", 2)
+    .on("mouseover", function(event, d) {
+      // Highlight this area
+      d3.selectAll(".area")
+        .classed("inactive", function(dd) {
+          return dd.key !== d.key;
+        });
+    })
+    .on("mouseout", function() {
+      d3.selectAll(".area").classed("inactive", false);
     });
-  });
+
+  // Add crosshair
+  const crosshair = svg.append("line")
+    .attr("class", "crosshair")
+    .attr("y1", 0)
+    .attr("y2", height);
+
+  // Add invisible overlay for mouse tracking
+  svg.append("rect")
+    .attr("width", width)
+    .attr("height", height)
+    .style("fill", "none")
+    .style("pointer-events", "all")
+    .on("mousemove", function(event) {
+      const [mx] = d3.pointer(event);
+      const year = Math.round(x.invert(mx));
+      const data = yearlyData.find(d => d.year === year);
+      
+      if (data) {
+        crosshair.attr("x1", x(year))
+          .attr("x2", x(year))
+          .classed("active", true);
+        
+        showTooltip(event, data, year);
+      }
+    })
+    .on("mouseout", function() {
+      crosshair.classed("active", false);
+      hideTooltip();
+    });
+
+  const xAxis = svg.append("g")
+    .attr("class", "x-axis")
+    .attr("transform", `translate(0,${height})`)
+    .call(d3.axisBottom(x)
+      .tickFormat(d3.format("d"))
+      .tickValues(yearlyData.map(d => d.year))
+      .tickSize(6));
+
+  xAxis.selectAll("text")
+    .style("font-size", "11px")
+    .style("font-weight", "600")
+    .style("fill", "#003366");
+
+  xAxis.selectAll("line")
+    .style("stroke", "#b0d4e8");
+
+  xAxis.select(".domain")
+    .style("stroke", "#b0d4e8")
+    .style("stroke-width", "2px");
+
+  // Y-axis with proper styling
+  const yAxisFormat = viewMode === "percent" ? d => d + "%" : d3.format("~s");
+  
+  const yAxis = svg.append("g")
+    .attr("class", "y-axis")
+    .call(d3.axisLeft(y).tickFormat(yAxisFormat));
+
+  yAxis.selectAll("text")
+    .style("font-size", "12px")
+    .style("font-weight", "600")
+    .style("fill", "#003366");
+
+  yAxis.selectAll("line")
+    .style("stroke", "#b0d4e8");
+
+  yAxis.select(".domain")
+    .style("stroke", "#b0d4e8")
+    .style("stroke-width", "2px");
+
+  svg.append("text")
+    .attr("class", "axis-label")
+    .attr("x", width / 2)
+    .attr("y", height + 40)
+    .attr("text-anchor", "middle")
+    .style("font-size", "13px")
+    .style("font-weight", "600")
+    .text("Year");
+
+  svg.append("text")
+    .attr("class", "axis-label")
+    .attr("transform", "rotate(-90)")
+    .attr("x", -height / 2)
+    .attr("y", -70)
+    .attr("text-anchor", "middle")
+    .style("font-size", "13px")
+    .style("font-weight", "600")
+    .text(metric === "TOTAL_FINES" ? "Total Fines" : "Fines per 10k Licences");
+
+  const cameraStartX = x(2020);
+  
+  // Vertical dashed line
+  svg.append("line")
+    .attr("class", "annotation-line")
+    .attr("x1", cameraStartX)
+    .attr("x2", cameraStartX)
+    .attr("y1", 0)
+    .attr("y2", height)
+    .style("stroke", "#D55E00")
+    .style("stroke-width", 2)
+    .style("stroke-dasharray", "6,4")
+    .style("opacity", 0.6);
+
+  // Annotation box with background
+  const annotationGroup = svg.append("g")
+    .attr("class", "annotation-group");
+
+  // Background rectangle for text
+  const annotationText = "Camera Detection Introduced";
+  const textBBox = { width: 160, height: 50 };
+
+  // Icon
+  annotationGroup.append("text")
+    .attr("x", cameraStartX + 20)
+    .attr("y", 40)
+    .style("font-size", "20px")
+    .text("📷");
+
+  // Main text
+  annotationGroup.append("text")
+    .attr("x", cameraStartX + 45)
+    .attr("y", 38)
+    .style("font-size", "11px")
+    .style("font-weight", "700")
+    .style("fill", "#2d3748")
+    .text("Camera Detection");
+
+  annotationGroup.append("text")
+    .attr("x", cameraStartX + 45)
+    .attr("y", 52)
+    .style("font-size", "11px")
+    .style("font-weight", "700")
+    .style("fill", "#2d3748")
+    .text("Introduced (2020)");
 }
+
+// Tooltip functions
+function showTooltip(event, data, year) {
+  let html = `<strong>${year}</strong>`;
+  
+  METHODS.forEach(method => {
+    if (!hiddenSeries.has(method)) {
+      const value = viewMode === "percent" 
+        ? data[method].toFixed(1) + "%" 
+        : data[method].toLocaleString();
+      
+      html += `
+        <div class="tooltip-row">
+          <span class="tooltip-label">
+            <span class="tooltip-color" style="background: ${COLORS[method]}"></span>
+            ${method}
+          </span>
+          <span class="tooltip-value">${value}</span>
+        </div>
+      `;
+    }
+  });
+
+  tooltip.style("opacity", 1)
+    .html(html)
+    .style("left", (event.pageX + 15) + "px")
+    .style("top", (event.pageY - 10) + "px");
+}
+
+function hideTooltip() {
+  tooltip.style("opacity", 0);
+}
+
+// Export functionality
+document.getElementById("export-stacked").addEventListener("click", () => {
+  const svg = document.querySelector("#q2-stacked svg");
+  if (!svg) return;
+  
+  const svgData = new XMLSerializer().serializeToString(svg);
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  const img = new Image();
+  
+  canvas.width = svg.width.baseVal.value;
+  canvas.height = svg.height.baseVal.value;
+  
+  img.onload = () => {
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0);
+    
+    canvas.toBlob(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "stacked-area-chart.png";
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  };
+  
+  img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
+});

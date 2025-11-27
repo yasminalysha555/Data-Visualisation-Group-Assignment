@@ -48,62 +48,147 @@
   <div class="page-container">
 
     <h1 class="page-title">Police vs Camera: How Fines Are Detected</h1>
-    <p class="section-desc">
+    <p class="subtitle">
       Compare how <strong>police-issued</strong> and <strong>camera-issued</strong> mobile phone fines evolved over time,
       both in total numbers and normalised per 10,000 licence holders.
     </p>
 
+    <!-- STATS CARDS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Police Fines</div>
+        <div class="stat-value" id="stat-police">-</div>
+        <div class="stat-change" id="stat-police-change">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Camera Fines</div>
+        <div class="stat-value" id="stat-camera">-</div>
+        <div class="stat-change" id="stat-camera-change">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Peak Year</div>
+        <div class="stat-value" id="stat-peak-year">-</div>
+        <div class="stat-change" id="stat-peak-value">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Camera Share (2024)</div>
+        <div class="stat-value" id="stat-camera-share">-</div>
+        <div class="stat-change">of all fines</div>
+      </div>
+    </div>
+
     <!-- Shared tooltip -->
-    <div id="tooltip" class="tooltip"></div>
+    <div id="tooltip"></div>
 
     <!-- 1. STACKED AREA – NATIONAL OVER TIME  -->
     <section class="chart-section">
-      <h2 class="chart-header">National Trends: Police vs Camera (2008–2024)</h2>
+      <h2 class="chart-header">
+        📈 National Trends: Police vs Camera (2008–2024)
+      </h2>
 
-      <p class="section-desc">
+      <p class="chart-desc">
+        Explore how mobile phone fine enforcement has shifted from police-only detection to camera-assisted detection since 2020.
+        Toggle between absolute numbers and percentage views to see the changing enforcement landscape.
       </p>
 
-      <div class="chart-controls">
-        <span class="control-label">Metric:</span>
-        <label><input type="radio" name="q2-metric" value="TOTAL_FINES" checked> Total fines</label>
-        <label><input type="radio" name="q2-metric" value="FINES_PER_10K_LICENCES"> Fines per 10k licences</label>
+      <div class="controls-panel">
+        <div class="control-group">
+          <span class="control-label">Metric:</span>
+          <div class="radio-group">
+            <label class="radio-button">
+              <input type="radio" name="q2-metric" value="TOTAL_FINES" checked>
+              <span>Total fines</span>
+            </label>
+            <label class="radio-button">
+              <input type="radio" name="q2-metric" value="FINES_PER_10K_LICENCES">
+              <span>Fines per 10k licences</span>
+            </label>
+          </div>
+        </div>
 
-        <span class="control-label" style="margin-left:18px;">View:</span>
-        <label><input type="radio" name="q2-view" value="absolute" checked> Absolute</label>
-        <label><input type="radio" name="q2-view" value="percent"> % of yearly total</label>
+        <div class="control-group">
+          <span class="control-label">View:</span>
+          <div class="radio-group">
+            <label class="radio-button">
+              <input type="radio" name="q2-view" value="absolute" checked>
+              <span>Absolute</span>
+            </label>
+            <label class="radio-button">
+              <input type="radio" name="q2-view" value="percent">
+              <span>% of yearly total</span>
+            </label>
+          </div>
+        </div>
       </div>
 
-      <div id="q2-stacked" class="chart-box"></div>
+      <div id="q2-stacked" class="chart-box">
+        <button class="export-btn" id="export-stacked">📥 Export PNG</button>
+      </div>
+
+      <!-- Interactive Legend -->
+      <div class="legend-container" id="stacked-legend"></div>
     </section>
 
     <!-- 2. GROUPED / STACKED BAR – BY STATE   -->
     <section class="chart-section">
-      <h2 class="chart-header">By State: Police vs Camera</h2>
+      <h2 class="chart-header">
+        🗺️ By State: Police vs Camera
+      </h2>
 
-      <p class="section-desc">
+      <p class="chart-desc">
+        Compare enforcement methods across Australian states and territories. Select different time periods to see how
+        camera adoption and enforcement patterns vary by jurisdiction.
       </p>
 
-      <div class="chart-controls">
-        <span class="control-label">Period:</span>
-        <select id="q2-year-select">
-          <!-- options will be injected by JS based on data -->
-        </select>
+      <div class="controls-panel">
+        <div class="control-group">
+          <span class="control-label">Period:</span>
+          <div class="select-wrapper">
+            <select id="q2-year-select">
+              <!-- options will be injected by JS based on data -->
+            </select>
+          </div>
+        </div>
 
-        <span class="control-label" style="margin-left:18px;">Metric:</span>
-        <label><input type="radio" name="q2g-metric" value="TOTAL_FINES" checked> Total fines</label>
-        <label><input type="radio" name="q2g-metric" value="FINES_PER_10K_LICENCES"> Fines per 10k licences</label>
+        <div class="control-group">
+          <span class="control-label">Metric:</span>
+          <div class="radio-group">
+            <label class="radio-button">
+              <input type="radio" name="q2g-metric" value="TOTAL_FINES" checked>
+              <span>Total fines</span>
+            </label>
+            <label class="radio-button">
+              <input type="radio" name="q2g-metric" value="FINES_PER_10K_LICENCES">
+              <span>Fines per 10k licences</span>
+            </label>
+          </div>
+        </div>
 
-        <span class="control-label" style="margin-left:18px;">Layout:</span>
-        <label><input type="radio" name="q2g-layout" value="grouped" checked> Grouped</label>
-        <label><input type="radio" name="q2g-layout" value="stacked"> Stacked</label>
+        <div class="control-group">
+          <span class="control-label">Layout:</span>
+          <div class="radio-group">
+            <label class="radio-button">
+              <input type="radio" name="q2g-layout" value="grouped" checked>
+              <span>Grouped</span>
+            </label>
+            <label class="radio-button">
+              <input type="radio" name="q2g-layout" value="stacked">
+              <span>Stacked</span>
+            </label>
+          </div>
+        </div>
       </div>
 
-      <div id="q2-grouped" class="chart-box"></div>
+      <div id="q2-grouped" class="chart-box">
+        <button class="export-btn" id="export-grouped">📥 Export PNG</button>
+      </div>
+
+      <!-- Interactive Legend -->
+      <div class="legend-container" id="grouped-legend"></div>
     </section>
 
   </div>
 
-    <!-- PAGE NAVIGATION BUTTONS -->
   <div class="page-nav">
     <a href="q1.html" class="nav-btn prev-btn">← Previous Page</a>
     <a href="q3.html" class="nav-btn next-btn">Next Page →</a>
