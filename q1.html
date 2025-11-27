@@ -12,7 +12,7 @@
   <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 
-<body class="svg-default">
+<body>
 
   <!-- NAVBAR -->
   <div class="navbar">
@@ -89,7 +89,12 @@
     </div>
 
     <!-- MULTILINE CHART -->
-    <div id="q1-multiline" class="chart-box"></div>
+    <div class="chart-wrapper">
+      <div id="q1-multiline" class="chart-box"></div>
+      <div id="q1-legend"></div>
+    </div>
+    
+
 
     <!-- ======================================================= -->
     <!--                    SMALL MULTIPLES                      -->
@@ -101,14 +106,14 @@
     </p>
 
     <div id="q1-small" class="small-multiples-grid"></div>
-
   </div>
 
   <!-- NEXT PAGE BUTTON -->
-  <div class="next-page-container">
-    <a href="q2.html" class="next-page-btn">Next Page →</a>
-  </div>
-  
+<div class="next-page-container">
+  <a href="q2.html" class="next-page-btn">Next Page →</a>
+</div>
+
+
   <!-- JS Files -->
   <script src="js/script.js"></script>         <!-- Menu + dropdown -->
   <script src="js/q1_multiline.js"></script>   <!-- Multiline chart -->

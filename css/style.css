@@ -1349,3 +1349,14 @@ body.transition-out {
     font-size: 1.5rem;
   }
 }
+/*LEGEND FIXED POSITIONING FOR Q1 CHART*/
+.chart-wrapper {
+  position: relative;
+}
+
+/* Legend fixed INSIDE the white chart box */
+#q1-legend {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}

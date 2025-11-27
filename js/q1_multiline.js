@@ -155,48 +155,42 @@ function setupChart() {
 
 /* ---------------- LEGEND ---------------- */
 function createLegend() {
-  const legend = q1Svg.append("g")
-    .attr("class", "q1-legend")
-    .attr("transform", `translate(${q1Width + 20},0)`);
+  const legend = d3.select("#q1-legend");
+  legend.html(""); // clear old legend
 
-  const item = legend.selectAll(".legend-item")
+  const items = legend.selectAll(".legend-item")
     .data(states)
     .enter()
-    .append("g")
+    .append("div")
     .attr("class", "legend-item")
-    .attr("transform", (d,i)=>`translate(0,${i*26})`)
-    .style("cursor","pointer")
-    .on("click",(e,state)=>{
+    .style("display", "flex")
+    .style("align-items", "center")
+    .style("gap", "6px")
+    .style("cursor", "pointer")
+    .on("click", (event, state) => {
       legendVisible[state] = !legendVisible[state];
-
-      legend.selectAll(".legend-square")
-        .filter(d=>d===state)
-        .attr("opacity", legendVisible[state] ? 1 : 0.25);
-
-      legend.selectAll(".legend-label")
-        .filter(d=>d===state)
-        .attr("fill-opacity", legendVisible[state] ? 1 : 0.4);
-
+      updateLegendOpacity();
       drawChart();
     });
 
-  item.append("rect")
-    .attr("class","legend-square")
-    .attr("width",16)
-    .attr("height",16)
-    .attr("fill",d=>color(d))
-    .attr("rx",3);
+  items.append("div")
+    .attr("class", "legend-color")
+    .style("width", "14px")
+    .style("height", "14px")
+    .style("background", d => color(d));
 
-  item.append("text")
-    .attr("class","legend-label")
-    .attr("x",24)
-    .attr("y",12)
-    .attr("font-size","13px")
-    .attr("font-weight",600)
-    .text(d=>d);
+  items.append("span")
+    .attr("class", "legend-label")
+    .text(d => d);
+
+  updateLegendOpacity();
 }
 
-
+function updateLegendOpacity() {
+  d3.select("#q1-legend")
+    .selectAll(".legend-item")
+    .style("opacity", d => legendVisible[d] ? 1 : 0.3);
+}
 
 /* ---------------- DRAW CHART ---------------- */
 function drawChart() {
