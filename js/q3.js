@@ -243,6 +243,19 @@
       const by = d3.scaleBand().domain(data.map(d=>d.jurisdiction)).range([0, bheight - barMargin.top - barMargin.bottom]).padding(0.15);
       const bG = barSvg.append('g').attr('transform', `translate(${barMargin.left},${barMargin.top})`);
       bG.append('g').call(d3.axisLeft(by));
+
+            // Y-axis label
+      bG.append('text')
+      .attr('class', 'axis-label')
+      .attr('transform', 'rotate(-90)')
+      .attr('x', -(bheight - barMargin.top - barMargin.bottom) / 2)
+      .attr('y', -80)
+      .attr('text-anchor', 'middle')
+      .style('font-size', '14px')
+      .style('font-weight', '600')
+      .style('fill', '#003366')
+      .text('Jurisdiction');
+
       bG.selectAll('.bar').data(data).enter().append('rect')
         .attr('class','bar')
         .attr('x', 0)
@@ -260,6 +273,17 @@
         .transition().duration(500).attr('width', d=>bx(d.rate));
       const bxAxis = d3.axisBottom(bx).ticks(6);
       bG.append('g').attr('transform', `translate(0, ${bheight - barMargin.top - barMargin.bottom})`).call(bxAxis);
+
+            // X-axis label
+      bG.append('text')
+      .attr('class', 'axis-label')
+      .attr('x', (bwidth - barMargin.left - barMargin.right) / 2)
+      .attr('y', bheight - barMargin.top - barMargin.bottom + 45)
+      .attr('text-anchor', 'middle')
+      .style('font-size', '14px')
+      .style('font-weight', '600')
+      .style('fill', '#003366')
+      .text('Fines per 10,000 Licence Holders');
 
       // highest / lowest
       const nonZero = data.filter(d=>!isNaN(d.rate));
