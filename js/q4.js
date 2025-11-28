@@ -20,6 +20,29 @@
   const xAxisG = inner.append('g').attr('class','x-axis').attr('transform', `translate(0,${height})`);
   const yAxisG = inner.append('g').attr('class','y-axis');
 
+  // ✨ NEW: Add X-axis label
+  inner.append('text')
+    .attr('class', 'axis-label')
+    .attr('x', width / 2)
+    .attr('y', height + 40)
+    .attr('text-anchor', 'middle')
+    .style('font-size', '14px')
+    .style('font-weight', '600')
+    .style('fill', '#003366')
+    .text('Year');
+
+  // ✨ NEW: Add Y-axis label
+  inner.append('text')
+    .attr('class', 'axis-label')
+    .attr('transform', 'rotate(-90)')
+    .attr('x', -height / 2)
+    .attr('y', -60)
+    .attr('text-anchor', 'middle')
+    .style('font-size', '14px')
+    .style('font-weight', '600')
+    .style('fill', '#003366')
+    .text('Total Fines');
+
   let cameraIntro = {
     'NSW': 2017,
     'QLD': 2017,

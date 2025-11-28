@@ -17,6 +17,27 @@
   const xAxisG = g.append('g').attr('class','x-axis').attr('transform', `translate(0,${height})`);
   const yAxisG = g.append('g').attr('class','y-axis');
 
+  g.append('text')
+    .attr('class', 'axis-label')
+    .attr('x', width / 2)
+    .attr('y', height + 40)
+    .attr('text-anchor', 'middle')
+    .style('font-size', '14px')
+    .style('font-weight', '600')
+    .style('fill', '#003366')
+    .text('Year');
+
+  g.append('text')
+    .attr('class', 'axis-label')
+    .attr('transform', 'rotate(-90)')
+    .attr('x', -height / 2)
+    .attr('y', -55)
+    .attr('text-anchor', 'middle')
+    .style('font-size', '14px')
+    .style('font-weight', '600')
+    .style('fill', '#003366')
+    .text('Total Fines');
+
   const jurisdictionsWanted = ['NSW','QLD','VIC','TAS'];
   // ACT optional if present
 
