@@ -293,7 +293,7 @@ footer {
 .q3-controls { display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px; }
 .year-wrap { display:flex; align-items:center; gap:12px; width:100%; }
 #yearDisplay { margin-left: 12px; font-weight:700; color:#007acc; }
-input[type=range] { appearance: none; -webkit-appearance: none; height: 10px; background: #cbeefc; border-radius: 8px; outline: none; width:100%; flex:1; }
+input[type=range] { appearance: none; -webkit-appearance: none; height: 10px; background: #5ecaf5; border-radius: 8px; outline: none; width:100%; flex:1; }
 input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width:20px; height:20px; border-radius:50%; background:#00aee8; box-shadow: 0 2px 6px rgba(0,0,0,0.2);} 
 .nav-buttons { display:flex; gap:14px; }
 .pill { background:#aee6fb; border:none; padding:10px 26px; border-radius:26px; color:#003366; font-weight:700; cursor:pointer; }
