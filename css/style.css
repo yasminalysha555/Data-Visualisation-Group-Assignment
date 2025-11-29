@@ -1412,3 +1412,24 @@ body.transition-out {
     font-size: 1.02rem;
   }
 }
+
+/* Q3 Map Reset View  */
+
+.reset-btn {
+  margin-top: 10px;
+  background: #1b6ca8;
+  color: white;
+  border: none;
+  border-radius: 25px;
+  padding: 10px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+  transition: 0.3s ease;
+}
+
+.reset-btn:hover {
+  background: #15527f;
+  transform: translateY(-2px);
+}
+

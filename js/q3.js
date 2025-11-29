@@ -19,6 +19,18 @@
     mapLayer.attr('transform', event.transform);
   });
   mapSvg.call(zoom).style('cursor', 'grab');
+  // RESET VIEW BUTTON
+  const resetBtn = d3.select("#resetMap");
+  const defaultTransform = d3.zoomIdentity;
+
+  resetBtn.on("click", () => {
+  mapSvg.transition()
+      .duration(600)
+      .call(zoom.transform, defaultTransform);
+
+  hideTooltip();
+  });
+
 
   // jurisdictions in consistent order
   const jurisdictions = ['NSW','QLD','VIC','TAS','SA','WA','NT','ACT'];
