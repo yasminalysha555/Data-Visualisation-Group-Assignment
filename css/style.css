@@ -1433,3 +1433,32 @@ body.transition-out {
   transform: translateY(-2px);
 }
 
+/* FOOTER */
+.footer {
+  width: 100%;
+  padding: 20px 10px;
+  margin-top: 40px;
+  border-top: 1px solid #e5e5e5;
+  background: #fafafa;
+  text-align: center;
+  font-family: "Inter", sans-serif;
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.footer-authors {
+  display: block;
+  font-size: 13px;
+  color: #555;
+}
