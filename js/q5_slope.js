@@ -1,6 +1,4 @@
-// =========================
-//   Q5 INTERACTIVE SLOPE GRAPH
-// =========================
+/*Q5 INTERACTIVE SLOPE GRAPH*/
 (function() {
 
     const CSV = "data/mobile_phone_cleaned.csv";
@@ -309,7 +307,7 @@
           });
       });
   
-      // Labels - Left side (2008) - positioned at LINE Y coordinates
+    
       slopeData.forEach(d => {
         labelGroup.append("text")
           .attr("data-jurisdiction", d.jurisdiction)

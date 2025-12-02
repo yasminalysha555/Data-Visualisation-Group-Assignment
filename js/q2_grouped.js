@@ -9,8 +9,8 @@ const gHeight = 500 - gMargin.top - gMargin.bottom;
 
 //Colour-blind safe palette
 const gColors = {
-  "Police issued": "#0072B2",   // blue
-  "Camera issued": "#D55E00"    // vermillion
+  "Police issued": "#0072B2",   
+  "Camera issued": "#D55E00"    
 };
 
 const gMethods = ["Police issued", "Camera issued"];

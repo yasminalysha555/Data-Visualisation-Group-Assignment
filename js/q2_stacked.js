@@ -2,10 +2,9 @@
 
 const tooltip = d3.select("#tooltip");
 
-// Colour-blind friendly palette
 const COLORS = {
-  "Police issued": "#0072B2",   // blue
-  "Camera issued": "#D55E00"    // vermillion
+  "Police issued": "#0072B2",  
+  "Camera issued": "#D55E00"   
 };
 
 const METHODS = ["Police issued", "Camera issued"];
